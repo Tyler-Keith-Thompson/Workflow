@@ -1,4 +1,6 @@
-### Why This Library?
+# Why This Library?
+Many reasons to be excited about Workflow.
+
 There are many reasons to be excited about Workflow:
 - Build flexibility into your applications so that you can easily make changes when you need to.
 - Compose new [Workflows](https://gitcdn.link/cdn/wwt/Workflow/faf9273f154954848bf6b6d5c592a7f0740ef53a/docs/Classes/Workflow.html) to quickly create a new journey through your app.

@@ -1,4 +1,0 @@
-- [Why This Library?](https://github.com/wwt/Workflow/wiki/Why-This-Library%3F)
-- [Installation](https://github.com/wwt/Workflow/wiki/Installation)
-- [Getting Started](https://github.com/wwt/Workflow/wiki/getting-started)
-- [Developer Documentation](https://gitcdn.link/repo/wwt/Workflow/main/docs/index.html)
