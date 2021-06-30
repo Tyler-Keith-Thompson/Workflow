@@ -118,3 +118,49 @@ var body: some View {
 extension Workflow {
     func launch() -> some View {}
 }
+
+///////////////// Enum Riffing
+
+public enum FooView<Content>: View where Content : View {
+   public var body: some View {
+       switch self {
+           default: EmptyView()
+       }
+   }
+
+   init(@ViewBuilder content: () -> Content) {
+
+   }
+
+   case foo: Button = Button()
+   case bar: Text = Text()
+
+   func foo() { }
+   var bar: Bool { true }
+}
+
+
+enum WorkflowViewy<Content>: View where Content : View { //    The view that you are placing on your screen
+    case workflow                                        //    The sequence of views you want to show
+    case workflowItems(Content)                          //    The specific wrapper around the view being presented at this point.
+
+    init(@ViewBuilder content: () -> Content) {
+        self = .workflowItems(content())
+    }
+
+    var body: some View {
+        EmptyView()
+    }
+}
+
+
+/*
+WorkflowViewy {
+    WorkflowViewy.init {
+        SecondView()
+            .padding()
+            .foregroundColor(.blue)
+            .transition(.slide)
+    }
+}
+*/
