@@ -77,9 +77,12 @@ class AnyWorkflow {
 
 
 struct FR1: FlowRepresentable { typealias Input = Never }
+struct FR2: FlowRepresentable { typealias Input = Never }
+struct FR3: FlowRepresentable { typealias Input = Never }
 struct TestView: View {
     @State var showWorkflow = false
     var body: some View {
+        // Testing View
         WorkflowView(isPresented: $showWorkflow)
             .launchStyle(.modal)
             .thenProceed(with: WorkflowItem(FR1.self))
@@ -90,6 +93,21 @@ struct TestView: View {
             .onAbandon { print("Abandoned") }
             .padding()
             .onAppear()
+
+        // Example View
+        WorkflowView(isPresented: $showWorkflow)
+                .thenProceed(with: WorkflowItem(FR1.self))
+                .thenProceed(with: WorkflowItem(FR2.self)
+                                      .launchStyle(.modal)
+                                      .presentationType(.navigationStack)
+                                      .persistence(.removedAfterProceeding)
+                                      .padding(10)
+                                      .transition(.opacity))
+                .thenProceed(with: WorkflowItem(FR3.self))
+                .launchStyle(.modal) // launch style of WorkflowView, could be moved to the top, depends on consumer
+                .onAbandon {
+                    showWorkflow = false
+                }
     }
 }
 
