@@ -26,30 +26,30 @@ struct WorkflowView: View {
     var body: some View { EmptyView() }
 //    @State var anyWorkflow: AnyWorkflow?
 
-    func thenProceed<Content: View>(with wi: Content) -> WorkflowView { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+    func thenProceed<Content: View>(with wi: Content) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         return self
     }
 
-    func onAbandon(_ closure: () -> Void) -> some View { self }// maybe goes on the VM
+    func onFinish(_ closure: (Any) -> Void) -> Self { self }// maybe adds to something on the VM
+    func onAbandon(_ closure: () -> Void) -> Self { self }// maybe adds to something on the VM [abandon1, abandon2](maybe)
+    func launchStyle(_ style: LaunchStyle) -> Self { self }
 }
-extension View where Body == WorkflowView {
-    func onAbandon(_ closure: () -> Void) -> some View { self } // maybe goes on the VM
-}
+
 extension ModifiedContent: FlowRepresentable where Content: FlowRepresentable{
     typealias Input = Content.Input
 }
 
 struct WorkflowItem: View {
     var body: some View { EmptyView() }
-//    var underlyingThing1: AnyWorkflow
-//    var undleryingThing2: AnyFlowRepresentable
     var metadata: FlowRepresentableMetadata
 
     init<FR: FlowRepresentable>(_: FR.Type) {
-//        underlyingThing1 = AnyWorkflow(Workflow<FR>())
-//        underlyingThing2 = AnyFlowRepresentable(FR())
         metadata = FlowRepresentableMetadata(FR.self)
     }
+
+    func launchStyle(_ style: LaunchStyle) -> Self { self } // update metadata here
+    func presentationType(_ presentation: PresentationType) -> Self { self } // update metadata here
+    func persistence(_ persistence: Persistence) -> Self { self } // update metadata here
 }
 
 // for here not for prod
@@ -57,6 +57,11 @@ extension WorkflowItem: FlowRepresentable {
     typealias Input = Never
 }
 
+enum LaunchStyle {
+    case modal
+}
+enum PresentationType { case navigationStack }
+enum Persistence { case removedAfterProceeding }
 protocol FlowRepresentable {
     associatedtype Input
 }
@@ -70,17 +75,18 @@ class AnyWorkflow {
     func append(metadata: FlowRepresentableMetadata) { }
 }
 
+
 struct FR1: FlowRepresentable { typealias Input = Never }
-
-
-
 struct TestView: View {
     @State var showWorkflow = false
     var body: some View {
         WorkflowView(isPresented: $showWorkflow)
+            .launchStyle(.modal)
             .thenProceed(with: WorkflowItem(FR1.self))
+            .thenProceed(with: WorkflowItem(FR1.self).launchStyle(.modal))
             .thenProceed(with: WorkflowItem(FR1.self).padding())
             .thenProceed(with: Text("This is not right"))
+            .onFinish { args in print("Completed with \(args)") }
             .onAbandon { print("Abandoned") }
             .padding()
             .onAppear()
