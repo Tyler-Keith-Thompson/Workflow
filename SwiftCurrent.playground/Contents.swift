@@ -26,8 +26,7 @@ struct WorkflowView: View {
     var body: some View { EmptyView() }
 //    @State var anyWorkflow: AnyWorkflow?
 
-    func thenProceed<Content: View & FlowRepresentable>(with wi: Content) -> WorkflowView { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
-//        anyWorkflow?.append(metadata: wi.metadata)
+    func thenProceed<Content: View>(with wi: Content) -> WorkflowView { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         return self
     }
 
@@ -79,9 +78,9 @@ struct TestView: View {
     @State var showWorkflow = false
     var body: some View {
         WorkflowView(isPresented: $showWorkflow)
-            .thenProceed(with: WorkflowItem(FR1.self)
-//                            .padding()
-            )
+            .thenProceed(with: WorkflowItem(FR1.self))
+            .thenProceed(with: WorkflowItem(FR1.self).padding())
+            .thenProceed(with: Text("This is not right"))
             .onAbandon { print("Abandoned") }
             .padding()
             .onAppear()
