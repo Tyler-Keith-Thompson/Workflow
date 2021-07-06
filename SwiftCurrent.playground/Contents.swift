@@ -34,7 +34,7 @@ struct WorkflowView: View {
         }
 
         print("I can call type(of:) but does that help?: \(type(of: wi))")
-        
+
         return self
     }
 
@@ -123,7 +123,10 @@ print("\(WorkflowItem(FR1.self))\n")
 print("\(wv.thenProceed(with: WorkflowItem(FR1.self)))\n")
 print("\(wv.thenProceed(with: WorkflowItem(FR1.self).padding()))\n")
 print("\(wv.thenProceed(with: WorkflowItem(FR1.self).accentColor(Color.blue).padding()))\n")
+print("\(wv.thenProceed(with: WorkflowItem(FR1.self).borderedCaption()))\n")
+print("\(wv.thenProceed(with: WorkflowItem(FR1.self).popover(isPresented: .constant(true), content: { Text("") })))\n")
 print("\(wv.thenProceed(with: Text("This should break")))\n")
+print("\(wv.thenProceed(with: Text("Also breaks").bold()))\n")
 
 print("RAN \(Date())")
 //print("\(Text("Foo"))\n\n")
@@ -140,3 +143,22 @@ print("RAN \(Date())")
 //        print("Body type: \(Body.self)")
 //    }
 //}
+
+
+struct BorderedCaption: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.caption2)
+            .padding(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(lineWidth: 1)
+            )
+            .foregroundColor(Color.blue)
+    }
+}
+extension View {
+    func borderedCaption() -> some View {
+        modifier(BorderedCaption())
+    }
+}
