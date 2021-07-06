@@ -27,6 +27,14 @@ struct WorkflowView: View {
 //    @State var anyWorkflow: AnyWorkflow?
 
     func thenProceed<Content: View>(with wi: Content) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+        if let proto = wi as? Metadata {
+            print("GUARD LET: Casted to Metadata: \(proto)")
+        } else {
+            print("FATAL ERROR: Failed to cast: \(wi)")
+        }
+
+        print("I can call type(of:) but does that help?: \(type(of: wi))")
+        
         return self
     }
 
@@ -35,11 +43,15 @@ struct WorkflowView: View {
     func launchStyle(_ style: LaunchStyle) -> Self { self }
 }
 
-extension ModifiedContent: FlowRepresentable where Content: FlowRepresentable{
-    typealias Input = Content.Input
+protocol Metadata {
+    var metadata: FlowRepresentableMetadata { get }
 }
 
-struct WorkflowItem: View {
+extension ModifiedContent: Metadata where Content: Metadata {
+    var metadata: FlowRepresentableMetadata { content.metadata }
+}
+
+struct WorkflowItem: View, Metadata {
     var body: some View { EmptyView() }
     var metadata: FlowRepresentableMetadata
 
@@ -106,7 +118,12 @@ struct TestView: View {
     }
 }
 
-print("\(WorkflowItem(FR1.self).padding())")
+var wv = WorkflowView(isPresented: .constant(true))
+print("\(WorkflowItem(FR1.self))\n")
+print("\(wv.thenProceed(with: WorkflowItem(FR1.self)))\n")
+print("\(wv.thenProceed(with: WorkflowItem(FR1.self).padding()))\n")
+print("\(wv.thenProceed(with: WorkflowItem(FR1.self).accentColor(Color.blue).padding()))\n")
+print("\(wv.thenProceed(with: Text("This should break")))\n")
 
 print("RAN \(Date())")
 //print("\(Text("Foo"))\n\n")
