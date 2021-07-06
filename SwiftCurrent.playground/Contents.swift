@@ -52,11 +52,6 @@ struct WorkflowItem: View {
     func persistence(_ persistence: Persistence) -> Self { self } // update metadata here
 }
 
-// for here not for prod
-extension WorkflowItem: FlowRepresentable {
-    typealias Input = Never
-}
-
 enum LaunchStyle {
     case modal
 }
@@ -75,7 +70,7 @@ class AnyWorkflow {
     func append(metadata: FlowRepresentableMetadata) { }
 }
 
-
+// MARK: EXAMPLE and TESTING
 struct FR1: FlowRepresentable { typealias Input = Never }
 struct FR2: FlowRepresentable { typealias Input = Never }
 struct FR3: FlowRepresentable { typealias Input = Never }
