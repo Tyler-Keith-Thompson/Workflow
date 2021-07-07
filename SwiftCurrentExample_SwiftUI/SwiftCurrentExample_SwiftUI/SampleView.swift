@@ -12,7 +12,7 @@ import SwiftCurrent_SwiftUI
 struct SampleView: View {
     @State var shiftLeading = false
     private let workflow = Workflow(FirstView.self)
-        .thenProceed(with: SecondView.self)
+//        .thenProceed(with: SecondView.self)
 
     var body: some View {
         Text("")

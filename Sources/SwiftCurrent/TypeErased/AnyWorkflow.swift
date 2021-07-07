@@ -33,6 +33,10 @@ public class AnyWorkflow {
         storageBase = AnyWorkflowStorage(workflow)
     }
 
+    public init(_ workflow: WorkflowBase) {
+        storageBase = AnyWorkflowBaseStorage(workflow)
+    }
+
     // swiftlint:disable:next missing_docs
     public func _abandon() { storageBase._abandon() }
 }
@@ -105,6 +109,37 @@ fileprivate final class AnyWorkflowStorage<F: FlowRepresentable>: AnyWorkflowSto
     override var count: Int { workflow.count }
 
     init(_ workflow: Workflow<F>) {
+        self.workflow = workflow
+    }
+
+    override func _abandon() {
+        workflow._abandon()
+    }
+
+    override func makeIterator() -> LinkedList<_WorkflowItem>.Iterator {
+        workflow.makeIterator()
+    }
+
+    override func last(where predicate: (LinkedList<_WorkflowItem>.Element) throws -> Bool) rethrows -> LinkedList<_WorkflowItem>.Element? {
+        try workflow.last(where: predicate)
+    }
+}
+
+fileprivate final class AnyWorkflowBaseStorage: AnyWorkflowStorageBase {
+    let workflow: WorkflowBase
+
+    override var orchestrationResponder: OrchestrationResponder? {
+        get {
+            workflow.orchestrationResponder
+        }
+        set {
+            workflow.orchestrationResponder = newValue
+        }
+    }
+
+    override var count: Int { workflow.count }
+
+    init(_ workflow: WorkflowBase) {
         self.workflow = workflow
     }
 

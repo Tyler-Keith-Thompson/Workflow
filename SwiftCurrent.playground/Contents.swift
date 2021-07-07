@@ -29,6 +29,7 @@ struct WorkflowView: View {
     func thenProceed<Content: View>(with wi: Content) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         if let proto = wi as? Metadata {
             print("GUARD LET: Casted to Metadata: \(proto)")
+            print("And the base type is: \(proto.metadata.subjectType) which is lies because it really is an Any.Type")
         } else {
             print("FATAL ERROR: Failed to cast: \(wi)")
         }
@@ -73,7 +74,10 @@ protocol FlowRepresentable {
     associatedtype Input
 }
 class FlowRepresentableMetadata {
-    init<FR: FlowRepresentable>(_ type: FR.Type) { }
+    public let subjectType: Any.Type
+    init<FR: FlowRepresentable>(_ type: FR.Type) {
+        subjectType = FR.self
+    }
 }
 
 class Workflow<F: FlowRepresentable> {}
@@ -127,6 +131,20 @@ print("\(wv.thenProceed(with: WorkflowItem(FR1.self).borderedCaption()))\n")
 print("\(wv.thenProceed(with: WorkflowItem(FR1.self).popover(isPresented: .constant(true), content: { Text("") })))\n")
 print("\(wv.thenProceed(with: Text("This should break")))\n")
 print("\(wv.thenProceed(with: Text("Also breaks").bold()))\n")
+
+//let wi = WorkflowItem(FR1.self)
+//print("WorkflowItem:\n")
+//print("- Base: \(wi)")
+//print("- Mirror: \(Mirror(reflecting: wi))")
+//print("- subject: \(Mirror(reflecting: wi).subjectType)")
+//print("- children: \(Mirror(reflecting: wi).children)")
+//print("\n\n\n\n")
+//
+//let modifiedWi = WorkflowItem(FR1.self).padding()
+//print("modified WorkflowItem:\n")
+//print("- Base: \(modifiedWi)")
+//print("- Mirror: \(Mirror(reflecting: modifiedWi))")
+//print("- subject: \(Mirror(reflecting: modifiedWi).subjectType)")
 
 print("RAN \(Date())")
 //print("\(Text("Foo"))\n\n")

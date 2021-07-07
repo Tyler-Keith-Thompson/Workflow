@@ -39,6 +39,14 @@ public class FlowRepresentableMetadata {
         self.launchStyle = launchStyle
     }
 
+    // Needed because FR was lost after the init so I can't init again with just this info
+    public func _updatePersistenceClosure(_ persistence: FlowPersistence) {
+        flowPersistence = { _ in persistence }
+    }
+    public func _updateLaunchStyle(_ launchStyle: LaunchStyle) {
+        self.launchStyle = launchStyle
+    }
+
     func setPersistence(_ args: AnyWorkflow.PassedArgs) -> FlowPersistence {
         let val = flowPersistence(args)
         persistence = val

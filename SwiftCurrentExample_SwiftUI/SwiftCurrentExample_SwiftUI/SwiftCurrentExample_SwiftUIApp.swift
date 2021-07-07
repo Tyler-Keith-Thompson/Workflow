@@ -15,7 +15,11 @@ struct SwiftCurrentExample_SwiftUIApp: App {
         WindowGroup {
 //            ContentView()
 //            SampleView()
-            Tester()
+//            Tester()
+            WorkflowItem(FirstView.self)
+            WorkflowView(isPresented: .constant(true))
+                .thenProceed(with: WorkflowItem(FirstView.self))
+                .thenProceed(with: WorkflowItem(SecondView.self))
         }
     }
 }
@@ -80,29 +84,13 @@ struct Tester: View {
 struct Tester_Previews: PreviewProvider {
     static var previews: some View {
         Tester()
-        WorkflowView {
-            WorkflowItem<SecondView>()
-                .padding()
-                .foregroundColor(.blue)
-                .transition(.slide)
-            WorkflowItem<FirstView>()
-        }
+//        WorkflowView {
+//            WorkflowItem<SecondView>()
+//                .padding()
+//                .foregroundColor(.blue)
+//                .transition(.slide)
+//            WorkflowItem<FirstView>()
+//        }
 
-    }
-}
-
-struct WorkflowView<Content>: View where Content : View {
-    var body: some View {
-        EmptyView()
-    }
-
-    init(@ViewBuilder content: () -> Content) {
-
-    }
-}
-
-struct WorkflowItem<Content>: View where Content: View & FlowRepresentable {
-    var body: some View {
-        EmptyView()
     }
 }

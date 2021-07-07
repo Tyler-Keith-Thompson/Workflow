@@ -21,7 +21,8 @@ import Foundation
 ///         .thenProceed(with: SomeOtherFlowRepresentable.self)
 /// }
 /// ```
-public final class Workflow<F: FlowRepresentable>: LinkedList<_WorkflowItem> {
+
+public class WorkflowBase: LinkedList<_WorkflowItem> {
     public required init(_ node: Element?) {
         super.init(node)
     }
@@ -219,6 +220,10 @@ public final class Workflow<F: FlowRepresentable>: LinkedList<_WorkflowItem> {
         setupProceedCallbacks(node, onFinish)
         setupBackUpCallbacks(node, onFinish)
     }
+}
+
+public final class Workflow<F: FlowRepresentable>: WorkflowBase {
+
 }
 
 extension Workflow {
