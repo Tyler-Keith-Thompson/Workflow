@@ -39,6 +39,10 @@ public class AnyWorkflow {
 
     // swiftlint:disable:next missing_docs
     public func _abandon() { storageBase._abandon() }
+
+    public func append(_ metadata: FlowRepresentableMetadata) {
+        storageBase.append(metadata)
+    }
 }
 
 extension AnyWorkflow: Sequence {
@@ -92,6 +96,12 @@ fileprivate class AnyWorkflowStorageBase {
     func last(where _: (LinkedList<_WorkflowItem>.Element) throws -> Bool) rethrows -> LinkedList<_WorkflowItem>.Element? {
         fatalError("last(where:) not overridden by AnyWorkflowStorage")
     }
+
+    // https://github.com/Tyler-Keith-Thompson/Workflow/blob/master/STYLEGUIDE.md#type-erasure
+    // swiftlint:disable:next unavailable_function
+    func append(_ metadata: FlowRepresentableMetadata) {
+        fatalError("append(:) not overriden")
+    }
 }
 
 fileprivate final class AnyWorkflowStorage<F: FlowRepresentable>: AnyWorkflowStorageBase {
@@ -123,6 +133,10 @@ fileprivate final class AnyWorkflowStorage<F: FlowRepresentable>: AnyWorkflowSto
     override func last(where predicate: (LinkedList<_WorkflowItem>.Element) throws -> Bool) rethrows -> LinkedList<_WorkflowItem>.Element? {
         try workflow.last(where: predicate)
     }
+
+    override func append(_ metadata: FlowRepresentableMetadata) {
+        workflow.append(metadata)
+    }
 }
 
 fileprivate final class AnyWorkflowBaseStorage: AnyWorkflowStorageBase {
@@ -153,5 +167,9 @@ fileprivate final class AnyWorkflowBaseStorage: AnyWorkflowStorageBase {
 
     override func last(where predicate: (LinkedList<_WorkflowItem>.Element) throws -> Bool) rethrows -> LinkedList<_WorkflowItem>.Element? {
         try workflow.last(where: predicate)
+    }
+
+    override func append(_ metadata: FlowRepresentableMetadata) {
+        workflow.append(metadata)
     }
 }
