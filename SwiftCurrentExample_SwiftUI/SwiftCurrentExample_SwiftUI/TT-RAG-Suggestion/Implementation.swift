@@ -35,7 +35,7 @@ public struct WorkflowItem: View, ViewMetadata {
     }
     var metadata: FlowRepresentableMetadata
 
-    public init<FR: FlowRepresentable>(_: FR.Type) {
+    public init<FR: FlowRepresentable & View>(_: FR.Type) {
         metadata = FlowRepresentableMetadata(FR.self) { _ in .default }
     }
 
@@ -50,6 +50,9 @@ public struct WorkflowItem: View, ViewMetadata {
 
         return self
     }
+
+    // MARK: AFTER MMP not right now but let's play it out
+    public func presentationType(_ style: LaunchStyle) -> Self { self }
 }
 
 public struct WorkflowView: View {
@@ -84,7 +87,7 @@ public struct WorkflowView: View {
             let anyWorkflow = AnyWorkflow(workflow)
             model.workflow = anyWorkflow
 
-            model.launchClosure = { workflow.launch(withOrchestrationResponder: model.orchestrationResponder,
+            model.launchClosure = { workflow.launch(withOrchestrationResponder: model,
                                              passedArgs: model.args,
                                              launchStyle: model.launchStyle,
                                              onFinish: { args in model.onFinish.forEach { $0(args) } })
@@ -108,10 +111,11 @@ public struct WorkflowView: View {
         model.launchStyle = style
         return self
     }
+}
 
-    private class WorkflowViewModel: ObservableObject {
+extension WorkflowView {
+    fileprivate class WorkflowViewModel: ObservableObject {
         var workflow: AnyWorkflow?
-        var orchestrationResponder = SwiftUIResponder()
         var launchStyle = LaunchStyle.default
         var onFinish = [(AnyWorkflow.PassedArgs) -> Void]()
         var onAbandon = [() -> Void]()
@@ -130,7 +134,7 @@ public struct WorkflowView: View {
     }
 }
 
-class SwiftUIResponder: OrchestrationResponder {
+extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
     func launch(to: AnyWorkflow.Element) {}
     func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {}
     func backUp(from: AnyWorkflow.Element, to: AnyWorkflow.Element) {}

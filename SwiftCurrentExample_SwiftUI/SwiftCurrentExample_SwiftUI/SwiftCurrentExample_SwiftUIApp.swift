@@ -23,6 +23,19 @@ struct SwiftCurrentExample_SwiftUIApp: App {
             WorkflowView(isPresented: .constant(true), args: "MY name is!")
                 .thenProceed(with: WorkflowItem(FirstView.self))
                 .thenProceed(with: WorkflowItem(SecondView.self))
+
+            WorkflowView(isPresented: .constant(true))
+                .thenProceed(with: WorkflowItem(FirstView.self))
+                .thenProceed(with: WorkflowItem(SecondView.self)
+                                .launchStyle(.default)
+                                .presentationType(.default)
+                                .persistence(.removedAfterProceeding)
+                                .padding(10)
+                                .transition(.opacity))
+                .launchStyle(.default) // launch style of WorkflowView, could be moved to the top, depends on consumer
+                .onAbandon {
+                    print("abandoned")
+                }
         }
     }
 }
