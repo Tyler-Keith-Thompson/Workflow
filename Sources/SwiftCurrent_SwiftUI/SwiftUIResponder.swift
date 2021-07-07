@@ -76,11 +76,3 @@ class ContainedView: ObservableObject {
     @Published var view = AnyView(EmptyView())
 }
 
-extension FlowRepresentable where Self: View {
-    public var _workflowUnderlyingInstance: Any {
-        get {
-            AnyView(self)
-        }
-    }
-}
-

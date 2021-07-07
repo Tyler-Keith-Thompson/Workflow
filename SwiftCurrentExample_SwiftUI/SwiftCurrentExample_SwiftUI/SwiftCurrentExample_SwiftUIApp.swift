@@ -11,21 +11,24 @@ import SwiftCurrent
 
 @main
 struct SwiftCurrentExample_SwiftUIApp: App {
+    @State var presentingWorkflowView = false
     var body: some Scene {
         WindowGroup {
-//            ContentView()
-//            SampleView()
-//            Tester()
+            //            ContentView()
+            //            SampleView()
+            //            Tester()
+            Text("I'm running, you're broken")
             WorkflowItem(FirstView.self)
             WorkflowView(isPresented: .constant(true))
                 .thenProceed(with: WorkflowItem(FirstView.self))
                 .thenProceed(with: WorkflowItem(SecondView.self))
-            WorkflowView(isPresented: .constant(true), args: "MY name is!")
-                .thenProceed(with: WorkflowItem(FirstView.self))
-                .thenProceed(with: WorkflowItem(SecondView.self))
+//            WorkflowView(isPresented: .constant(true), args: "MY name is!")
+//                .thenProceed(with: WorkflowItem(FirstView.self))
+//                .thenProceed(with: WorkflowItem(SecondView.self))
 
-            WorkflowView(isPresented: .constant(true))
-                .thenProceed(with: WorkflowItem(FirstView.self))
+            WorkflowView(isPresented: $presentingWorkflowView, args: "String in")
+                .thenProceed(with: WorkflowItem(FirstView.self)
+                                .background(Color.white))
                 .thenProceed(with: WorkflowItem(SecondView.self)
                                 .launchStyle(.default)
                                 .presentationType(.default)
@@ -36,6 +39,29 @@ struct SwiftCurrentExample_SwiftUIApp: App {
                 .onAbandon {
                     print("abandoned")
                 }
+            NotWorkflowView(isPresented: $presentingWorkflowView)
+        }
+    }
+}
+struct NotWorkflowView: View {
+    @Binding var isPresented: Bool
+    @StateObject private var model = NotWorkflowViewModel()
+    var body: some View {
+        if isPresented {
+            model.body
+        } else {
+            Button("Toggle") { isPresented.toggle() }
+        }
+        Button("update Body of model") { model.updateBody() }
+    }
+
+    private class NotWorkflowViewModel: ObservableObject {
+        @Published var body = AnyView(Text("From model"))
+
+        var counter = 0
+        func updateBody() {
+            counter += 1
+            body = AnyView(Text("Updated the body: \(counter)"))
         }
     }
 }

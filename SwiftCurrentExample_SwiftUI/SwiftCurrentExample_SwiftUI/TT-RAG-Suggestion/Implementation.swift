@@ -57,14 +57,20 @@ public struct WorkflowItem: View, ViewMetadata {
 
 public struct WorkflowView: View {
     @Binding var isPresented: Bool
-    @StateObject private var model = WorkflowViewModel()
+    @State private var model = WorkflowViewModel()
     public var body: some View {
         if isPresented {
-            model.body()
-                .onAppear {
-                    model.launchOnce()
-                }
+            withAnimation {
+                model.body
+                    .onAppear {
+                        model.launchOnce()
+                    }
+            }
         } else {
+            Button("Launch") {
+                model.launchOnce()
+                isPresented.toggle()
+            }
             EmptyView()
         }
     }
@@ -121,23 +127,64 @@ extension WorkflowView {
         var onAbandon = [() -> Void]()
         var args: AnyWorkflow.PassedArgs = .none
 
+        var launched = false
+
         var launchClosure = { }
 
         // we determine this launch call and it should only launch once
         func launchOnce() {
-            launchClosure()
+            if !launched {
+                launched.toggle()
+                launchClosure()
+            }
         }
 
-        @ViewBuilder func body() -> some View {
-            EmptyView()
-        }
+        @Published var body = AnyView(EmptyView())
     }
 }
 
 extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
-    func launch(to: AnyWorkflow.Element) {}
-    func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {}
-    func backUp(from: AnyWorkflow.Element, to: AnyWorkflow.Element) {}
-    func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {}
-    func complete(_ workflow: AnyWorkflow, passedArgs: AnyWorkflow.PassedArgs, onFinish: ((AnyWorkflow.PassedArgs) -> Void)?) {}
+    func launch(to: AnyWorkflow.Element) {
+        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
+            fatalError("Underlying instance was not AnyView")
+        }
+
+//        withAnimation {
+            body = underlyingView
+//        }
+    }
+
+    func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {
+        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
+            fatalError("Underlying instance was not AnyView")
+        }
+
+        withAnimation {
+            body = underlyingView
+        }
+    }
+
+    func backUp(from: AnyWorkflow.Element, to: AnyWorkflow.Element) {
+        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
+            fatalError("Underlying instance was not AnyView")
+        }
+
+//        withAnimation {
+            body = underlyingView
+//        }
+    }
+    func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {
+        print("abandon?")
+    }
+    func complete(_ workflow: AnyWorkflow, passedArgs: AnyWorkflow.PassedArgs, onFinish: ((AnyWorkflow.PassedArgs) -> Void)?) {
+        print("Complete?")
+    }
+}
+
+extension FlowRepresentable where Self: View {
+    public var _workflowUnderlyingInstance: Any {
+        get {
+            AnyView(self)
+        }
+    }
 }

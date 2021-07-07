@@ -87,6 +87,7 @@ struct FirstView: View, FlowRepresentable {
                 .multilineTextAlignment(.center)
             Button("Move Forward") {
                 // TODO: call proceed; pass in email
+                proceedInWorkflow(email)
             }
             .background(email.contains("@wwt.com") ? Color.green : Color.red)
             .padding()
@@ -124,7 +125,7 @@ struct SecondView: View, FlowRepresentable {
     }
 
     func shouldLoad() -> Bool {
-        return email == "lonewolf@wwt.com"
+        return email.lowercased() == "lonewolf@wwt.com"
     }
 }
 
