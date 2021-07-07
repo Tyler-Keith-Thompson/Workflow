@@ -18,10 +18,10 @@ struct SwiftCurrentExample_SwiftUIApp: App {
             //            SampleView()
             //            Tester()
             Text("I'm running, you're broken")
-            WorkflowItem(FirstView.self)
-            WorkflowView(isPresented: .constant(true))
-                .thenProceed(with: WorkflowItem(FirstView.self))
-                .thenProceed(with: WorkflowItem(SecondView.self))
+//            WorkflowItem(FirstView.self)
+//            WorkflowView(isPresented: .constant(true))
+//                .thenProceed(with: WorkflowItem(FirstView.self))
+//                .thenProceed(with: WorkflowItem(SecondView.self))
 //            WorkflowView(isPresented: .constant(true), args: "MY name is!")
 //                .thenProceed(with: WorkflowItem(FirstView.self))
 //                .thenProceed(with: WorkflowItem(SecondView.self))
@@ -39,24 +39,31 @@ struct SwiftCurrentExample_SwiftUIApp: App {
                 .onAbandon {
                     print("abandoned")
                 }
+                .onFinish { args in
+                    print("Finished 1: \(args)")
+                }
+                .onFinish { args in
+                    print("Finished 2: \(args)")
+                }
             NotWorkflowView(isPresented: $presentingWorkflowView)
         }
     }
 }
+
 struct NotWorkflowView: View {
     @Binding var isPresented: Bool
     @StateObject private var model = NotWorkflowViewModel()
     var body: some View {
         if isPresented {
             model.body
+            Button("update Body of model") { model.updateBody() }
         } else {
             Button("Toggle") { isPresented.toggle() }
         }
-        Button("update Body of model") { model.updateBody() }
     }
 
     private class NotWorkflowViewModel: ObservableObject {
-        @Published var body = AnyView(Text("From model"))
+        @Published var body = AnyView(EmptyView())
 
         var counter = 0
         func updateBody() {

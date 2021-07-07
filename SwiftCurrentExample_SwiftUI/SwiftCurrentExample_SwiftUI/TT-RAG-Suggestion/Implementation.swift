@@ -57,21 +57,16 @@ public struct WorkflowItem: View, ViewMetadata {
 
 public struct WorkflowView: View {
     @Binding var isPresented: Bool
-    @State private var model = WorkflowViewModel()
+    #warning("This is a timebomb, but StateObject and State both failed us")
+    @ObservedObject private var model = WorkflowViewModel()
+
     public var body: some View {
         if isPresented {
-            withAnimation {
+            VStack {
                 model.body
-                    .onAppear {
-                        model.launchOnce()
-                    }
-            }
-        } else {
-            Button("Launch") {
+            }.onAppear {
                 model.launchOnce()
-                isPresented.toggle()
             }
-            EmptyView()
         }
     }
 
@@ -149,9 +144,9 @@ extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
             fatalError("Underlying instance was not AnyView")
         }
 
-//        withAnimation {
+        withAnimation {
             body = underlyingView
-//        }
+        }
     }
 
     func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {
@@ -169,15 +164,19 @@ extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
             fatalError("Underlying instance was not AnyView")
         }
 
-//        withAnimation {
+        withAnimation {
             body = underlyingView
-//        }
+        }
     }
     func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {
-        print("abandon?")
+        withAnimation {
+            body = AnyView(EmptyView())
+        }
     }
     func complete(_ workflow: AnyWorkflow, passedArgs: AnyWorkflow.PassedArgs, onFinish: ((AnyWorkflow.PassedArgs) -> Void)?) {
-        print("Complete?")
+        withAnimation {
+            body = AnyView(EmptyView())
+        }
     }
 }
 

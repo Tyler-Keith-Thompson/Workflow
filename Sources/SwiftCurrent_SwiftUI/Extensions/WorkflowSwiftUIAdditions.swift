@@ -20,6 +20,7 @@ extension Workflow {
     }
 }
 
+#warning("This all seems wrong.  Old responder2 stuff.  But needed for now.")
 extension AnyWorkflow {
     /**
      Called when the workflow should be terminated, and the app should return to the point before the workflow was launched.
