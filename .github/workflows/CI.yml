@@ -1,0 +1,39 @@
+name: CI
+
+on: [ push, workflow_dispatch ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run TESTS
+        run: bundle exec fastlane unit_test
+      - name: Codecov
+        uses: codecov/codecov-action@v1.5.2
+        with:
+          fail_ci_if_error: true
+      - name: Upload Test logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-logs
+          path: ~/Library/Logs/scan
+          retention-days: 90
+
+  build_for_package_managers:
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Validate SwiftPM BUILDs
+        run: bundle exec fastlane build_swiftpm
+      - name: Validate Cocoapods Can Deploy (lib lint)
+        run: bundle exec fastlane cocoapods_liblint
+
+  lint: 
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Swiftlint
+        run: bundle exec fastlane lint
