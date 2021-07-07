@@ -70,7 +70,7 @@ public struct WorkflowView: View {
         self._isPresented = isPresented
     }
 
-    // We could name args something more explicit to convey that it is the values the workflow is starting with
+    // We could name args something more explicit to convey that it is the values the workflow is starting with... Possible name: thisWillBePassedToFirstFlowRepresentable
     public init(isPresented: Binding<Bool>, args: Any?) {
         self._isPresented = isPresented
         model.args = .args(args)
@@ -79,8 +79,6 @@ public struct WorkflowView: View {
     func thenProceed<Content: View>(with content: Content) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         guard let metadata = content as? ViewMetadata else { fatalError("thenProceed(with:) must be called with WorkflowItem.") }
 
-        print("metadata: \(metadata.metadata)")
-        // append metadata
         if model.workflow == nil {
             let workflow = WorkflowBase(metadata.metadata)
             let anyWorkflow = AnyWorkflow(workflow)
@@ -89,7 +87,7 @@ public struct WorkflowView: View {
             model.launchClosure = { workflow.launch(withOrchestrationResponder: model.orchestrationResponder,
                                              passedArgs: model.args,
                                              launchStyle: model.launchStyle,
-                                             onFinish: model.onFinish)
+                                             onFinish: { args in model.onFinish.forEach { $0(args) } })
             }
         } else {
             model.workflow?.append(metadata.metadata)
@@ -98,15 +96,25 @@ public struct WorkflowView: View {
         return self
     }
 
-    func onFinish(_ closure: (Any) -> Void) -> Self { self }// maybe adds to something on the VM
-    func onAbandon(_ closure: () -> Void) -> Self { self }// maybe adds to something on the VM [abandon1, abandon2](maybe)
-    func launchStyle(_ style: LaunchStyle) -> Self { self }
+    func onFinish(_ closure: @escaping (AnyWorkflow.PassedArgs) -> Void) -> Self {
+        model.onFinish.append(closure)
+        return self
+    }
+    func onAbandon(_ closure: @escaping () -> Void) -> Self {
+        model.onAbandon.append(closure)
+        return self
+    }
+    func launchStyle(_ style: LaunchStyle) -> Self {
+        model.launchStyle = style
+        return self
+    }
 
     private class WorkflowViewModel: ObservableObject {
         var workflow: AnyWorkflow?
         var orchestrationResponder = SwiftUIResponder()
         var launchStyle = LaunchStyle.default
-        var onFinish: ((AnyWorkflow.PassedArgs) -> Void)?
+        var onFinish = [(AnyWorkflow.PassedArgs) -> Void]()
+        var onAbandon = [() -> Void]()
         var args: AnyWorkflow.PassedArgs = .none
 
         var launchClosure = { }
@@ -123,8 +131,7 @@ public struct WorkflowView: View {
 }
 
 class SwiftUIResponder: OrchestrationResponder {
-    func launch(to: AnyWorkflow.Element) {
-    }
+    func launch(to: AnyWorkflow.Element) {}
     func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {}
     func backUp(from: AnyWorkflow.Element, to: AnyWorkflow.Element) {}
     func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {}
