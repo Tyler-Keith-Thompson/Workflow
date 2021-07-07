@@ -20,6 +20,9 @@ struct SwiftCurrentExample_SwiftUIApp: App {
             WorkflowView(isPresented: .constant(true))
                 .thenProceed(with: WorkflowItem(FirstView.self))
                 .thenProceed(with: WorkflowItem(SecondView.self))
+            WorkflowView(isPresented: .constant(true), args: "MY name is!")
+                .thenProceed(with: WorkflowItem(FirstView.self))
+                .thenProceed(with: WorkflowItem(SecondView.self))
         }
     }
 }

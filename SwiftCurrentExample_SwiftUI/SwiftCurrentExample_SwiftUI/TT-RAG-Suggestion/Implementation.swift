@@ -56,11 +56,24 @@ public struct WorkflowView: View {
     @Binding var isPresented: Bool
     @StateObject private var model = WorkflowViewModel()
     public var body: some View {
-        model.body()
-            .onAppear {
-                model.launchOnce()
-            }
-        // onAppear for an empty and then launch from there?
+        if isPresented {
+            model.body()
+                .onAppear {
+                    model.launchOnce()
+                }
+        } else {
+            EmptyView()
+        }
+    }
+
+    public init(isPresented: Binding<Bool>) {
+        self._isPresented = isPresented
+    }
+
+    // We could name args something more explicit to convey that it is the values the workflow is starting with
+    public init(isPresented: Binding<Bool>, args: Any?) {
+        self._isPresented = isPresented
+        model.args = .args(args)
     }
 
     func thenProceed<Content: View>(with content: Content) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
@@ -88,7 +101,6 @@ public struct WorkflowView: View {
     func onFinish(_ closure: (Any) -> Void) -> Self { self }// maybe adds to something on the VM
     func onAbandon(_ closure: () -> Void) -> Self { self }// maybe adds to something on the VM [abandon1, abandon2](maybe)
     func launchStyle(_ style: LaunchStyle) -> Self { self }
-    func args(_ arguments: AnyWorkflow.PassedArgs) -> Self { self }
 
     private class WorkflowViewModel: ObservableObject {
         var workflow: AnyWorkflow?
