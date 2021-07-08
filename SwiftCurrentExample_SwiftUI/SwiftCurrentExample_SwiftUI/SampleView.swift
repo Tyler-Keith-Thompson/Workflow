@@ -12,52 +12,10 @@ import SwiftCurrent_SwiftUI
 struct SampleView: View {
     @State var shiftLeading = false
     private let workflow = Workflow(FirstView.self)
-//        .thenProceed(with: SecondView.self)
+        .thenProceed(with: SecondView.self)
 
     var body: some View {
         Text("")
-//        SwiftUIResponder2(workflow: workflow) { _ in
-//        }
-//        .present(workflow)
-
-//        present(workflow)
-//
-//        workflow.present()
-
-//        ^ REJECTED!!!
-
-//        Option 1
-//        WorkflowGroup {
-//            FirstView() // but even if it takes parameters just use the () initializer
-//            SecondView()
-//                .background(shiftLeading ? .red : .blue)
-//                .transition(shiftLeading ? .slide : .fade)
-//
-//                ...
-//
-//            OneBeforeNthView()
-//                .show(when: .proceeding) //remove from stack when proceeding
-//            NthView()
-//                .show(when: .backingUp) //don't display unless backing up
-//        }
-//
-////        Option 2
-//        WorkflowGroup {
-//            ThenPresent(FirstView()) // but even if it takes parameters just use the () initializer
-//
-//            ReplaceWith(SecondView())
-//                .background(shiftLeading ? .red : .blue)
-//
-//                ...
-//
-//            OneBeforeNthView()
-//                .show(when: .proceeding) //remove from stack when proceeding
-//            NthView()
-//                .show(when: .backingUp) //don't display unless backing up
-//        }
-
-        //Injected @EnvironmentObject -> MY EnvironmentObject; my Workflow
-
     }
 }
 

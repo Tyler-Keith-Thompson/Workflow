@@ -171,11 +171,14 @@ extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
     func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {
         withAnimation {
             body = AnyView(EmptyView())
+            onAbandon.forEach { $0() }
+            onFinish?()
         }
     }
     func complete(_ workflow: AnyWorkflow, passedArgs: AnyWorkflow.PassedArgs, onFinish: ((AnyWorkflow.PassedArgs) -> Void)?) {
         withAnimation {
             body = AnyView(EmptyView())
+            onFinish?(passedArgs)
         }
     }
 }
