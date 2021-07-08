@@ -26,15 +26,16 @@ struct SwiftCurrentExample_SwiftUIApp: App {
 //                .thenProceed(with: WorkflowItem(FirstView.self))
 //                .thenProceed(with: WorkflowItem(SecondView.self))
 
-            WorkflowView(isPresented: $presentingWorkflowView, args: "String in")
+            WorkflowView(isPresented: .constant(true), args: "String in")
                 .thenProceed(with: WorkflowItem(FirstView.self)
-                                .background(Color.white))
+                                .background(Color.gray))
                 .thenProceed(with: WorkflowItem(SecondView.self)
                                 .launchStyle(.default)
                                 .presentationType(.default)
                                 .persistence(.removedAfterProceeding)
                                 .padding(10)
-                                .transition(.opacity))
+                                .transition(.slide)
+                                .background(Color.purple))
                 .launchStyle(.default) // launch style of WorkflowView, could be moved to the top, depends on consumer
                 .onAbandon {
                     print("abandoned")

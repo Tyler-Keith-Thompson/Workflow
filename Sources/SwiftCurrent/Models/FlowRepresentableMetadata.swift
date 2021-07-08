@@ -7,13 +7,18 @@
 //
 
 import Foundation
-
+import SwiftUI
 /**
  Data about a `FlowRepresentable`.
 
  ### Discussion
  Every time a `Workflow` is created, the defining characteristics about a `FlowRepresentable` are stored in the `FlowRepresentableMetadata` to be used later.
  */
+public protocol ViewMetadata {
+    var metadata: FlowRepresentableMetadata { get }
+    func updateView(with newView: AnyView)
+}
+
 public class FlowRepresentableMetadata {
     /// Preferred `LaunchStyle` of the associated `FlowRepresentable`.
     public private(set) var launchStyle: LaunchStyle
@@ -22,6 +27,8 @@ public class FlowRepresentableMetadata {
     private(set) var flowRepresentableFactory: (AnyWorkflow.PassedArgs) -> AnyFlowRepresentable
     private var flowPersistence: (AnyWorkflow.PassedArgs) -> FlowPersistence
 
+    public var circularView: AnyView?
+    public var updateableVersion: ViewMetadata?
     /**
      Creates an instance that holds onto metadata associated with the `FlowRepresentable`.
 

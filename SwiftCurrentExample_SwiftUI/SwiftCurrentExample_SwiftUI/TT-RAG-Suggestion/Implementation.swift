@@ -26,14 +26,23 @@ import SwiftCurrent
          }
  */
 
-protocol ViewMetadata { var metadata: FlowRepresentableMetadata { get } }
-extension ModifiedContent: ViewMetadata where Content: ViewMetadata { var metadata: FlowRepresentableMetadata { content.metadata } }
+
+extension ModifiedContent: ViewMetadata where Content: ViewMetadata {
+    public var metadata: FlowRepresentableMetadata { content.metadata }
+    public func updateView(with newView: AnyView) {
+        content.updateView(with: newView)
+    }
+}
 
 public struct WorkflowItem: View, ViewMetadata {
+    @ObservedObject var model = Model()
     public var body: some View {
-        EmptyView()
+        model.view
     }
-    var metadata: FlowRepresentableMetadata
+    public var metadata: FlowRepresentableMetadata
+    public func updateView(with newView: AnyView) {
+        model.view = newView
+    }
 
     public init<FR: FlowRepresentable & View>(_: FR.Type) {
         metadata = FlowRepresentableMetadata(FR.self) { _ in .default }
@@ -49,6 +58,10 @@ public struct WorkflowItem: View, ViewMetadata {
         metadata._updateLaunchStyle(style)
 
         return self
+    }
+
+    class Model: ObservableObject {
+        @Published var view = AnyView(EmptyView())
     }
 
     // MARK: AFTER MMP not right now but let's play it out
@@ -82,7 +95,8 @@ public struct WorkflowView: View {
 
     func thenProceed<Content: View>(with content: Content) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         guard let metadata = content as? ViewMetadata else { fatalError("thenProceed(with:) must be called with WorkflowItem.") }
-
+        metadata.metadata.circularView = AnyView(content)
+        metadata.metadata.updateableVersion = metadata
         if model.workflow == nil {
             let workflow = WorkflowBase(metadata.metadata)
             let anyWorkflow = AnyWorkflow(workflow)
@@ -140,22 +154,31 @@ extension WorkflowView {
 
 extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
     func launch(to: AnyWorkflow.Element) {
-        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
+        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView,
+              let circleCircle = to.value.metadata.circularView
+              , let notAnyView = to.value.metadata.updateableVersion
+        else {
             fatalError("Underlying instance was not AnyView")
         }
 
         withAnimation {
-            body = underlyingView
+            notAnyView.updateView(with: underlyingView)
+            body = circleCircle
         }
     }
 
     func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {
-        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
+        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView,
+              let circleCircle = to.value.metadata.circularView
+              , let notAnyView = to.value.metadata.updateableVersion
+        else {
             fatalError("Underlying instance was not AnyView")
         }
 
+
         withAnimation {
-            body = underlyingView
+            notAnyView.updateView(with: underlyingView)
+            body = circleCircle
         }
     }
 
