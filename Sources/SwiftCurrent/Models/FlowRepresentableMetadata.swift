@@ -28,35 +28,24 @@ public class FlowRepresentableMetadata {
      - Parameter launchStyle: the style to use when launching the `FlowRepresentable`.
      - Parameter flowPersistence: a closure passing arguments to the caller and returning the preferred `FlowPersistence`.
      */
-    public init<FR: FlowRepresentable>(_ flowRepresentableType: FR.Type,
+    public convenience init<FR: FlowRepresentable>(_ flowRepresentableType: FR.Type,
                                        launchStyle: LaunchStyle = .default,
                                        flowPersistence:@escaping (AnyWorkflow.PassedArgs) -> FlowPersistence) {
-        flowRepresentableFactory = { args in
-            AnyFlowRepresentable(FR.self, args: args)
-        }
-        self.flowPersistence = flowPersistence
-        self.launchStyle = launchStyle
+        self.init(flowRepresentableType,
+                  launchStyle: launchStyle,
+                  flowPersistence: flowPersistence) { args in
+                AnyFlowRepresentable(FR.self, args: args)
+            }
     }
 
     public init<FR: FlowRepresentable>(_ flowRepresentableType: FR.Type,
                                        launchStyle: LaunchStyle = .default,
                                        flowPersistence:@escaping (AnyWorkflow.PassedArgs) -> FlowPersistence,
                                        factory: @escaping (AnyWorkflow.PassedArgs) -> AnyFlowRepresentable) {
-        flowRepresentableFactory = factory
         self.flowPersistence = flowPersistence
         self.launchStyle = launchStyle
+        flowRepresentableFactory = factory
     }
-
-    // Needed because FR was lost after the init so I can't init again with just this info
-//    public func _updatePersistenceClosure(_ persistence: FlowPersistence) {
-//        flowPersistence = { _ in persistence }
-//    }
-//    public func _updateLaunchStyle(_ launchStyle: LaunchStyle) {
-//        self.launchStyle = launchStyle
-//    }
-//    public func _updateFlowRepresentableFactory(with closure: @escaping (AnyWorkflow.PassedArgs) -> AnyFlowRepresentable) {
-//        flowRepresentableFactory = closure
-//    }
 
     func setPersistence(_ args: AnyWorkflow.PassedArgs) -> FlowPersistence {
         let val = flowPersistence(args)
