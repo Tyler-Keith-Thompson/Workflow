@@ -107,7 +107,7 @@ public struct WorkflowView: View {
 
     func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         if model.workflow == nil {
-            let workflow = WorkflowBase(content.metadata)
+            let workflow = Workflow<FR>(content.metadata)
             let anyWorkflow = AnyWorkflow(workflow)
             model.workflow = anyWorkflow
 
