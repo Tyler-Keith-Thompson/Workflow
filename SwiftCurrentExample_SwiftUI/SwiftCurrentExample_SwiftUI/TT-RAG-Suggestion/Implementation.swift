@@ -38,12 +38,6 @@ public final class WorkflowItem<F: FlowRepresentable & View> {
                                              factory: factory)
     }
 
-    public func persistence(_ persistence: FlowPersistence) -> Self {
-        flowPersistence = { _ in persistence }
-
-        return self
-    }
-
     public func launchStyle(_ style: LaunchStyle) -> Self {
         metadata = FlowRepresentableMetadata(F.self,
                                              launchStyle: style,
@@ -75,6 +69,37 @@ public final class WorkflowItem<F: FlowRepresentable & View> {
         }
 
         return afr
+    }
+}
+// MARK: Persistence extensions
+extension WorkflowItem where F.WorkflowInput == Never {
+    public func persistence(_ persistence: @escaping @autoclosure () -> FlowPersistence) -> Self {
+        flowPersistence = { _ in persistence() }
+
+        return self
+    }
+}
+extension WorkflowItem  {
+    public func persistence(_ persistence: @escaping (F.WorkflowInput) -> FlowPersistence) -> Self where F.WorkflowInput == AnyWorkflow.PassedArgs {
+        flowPersistence = { persistence($0) }
+
+        return self
+    }
+
+    public func persistence(_ persistence: FlowPersistence) -> Self {
+        flowPersistence = { _ in persistence }
+
+        return self
+    }
+
+    public func persistence(_ persistence: @escaping (F.WorkflowInput) -> FlowPersistence) -> Self {
+        flowPersistence = { args in
+            guard case.args(let extracted) = args,
+                  let cast = extracted as? F.WorkflowInput else { fatalError("\(args) did not match expected Input type: \(F.WorkflowInput.self)") }
+            return persistence(cast)
+        }
+
+        return self
     }
 }
 

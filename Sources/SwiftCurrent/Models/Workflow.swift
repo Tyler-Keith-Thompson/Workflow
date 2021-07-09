@@ -345,7 +345,10 @@ extension Workflow {
         wf.append(FlowRepresentableMetadata(type,
                                             launchStyle: launchStyle) { data in
             guard case.args(let extracted) = data,
-                  let cast = extracted as? FR.WorkflowInput else { return .default }
+                  let cast = extracted as? FR.WorkflowInput else {
+                #warning("This should probably be a fatalError()")
+                return .default
+            }
             return flowPersistence(cast)
         })
         return wf
