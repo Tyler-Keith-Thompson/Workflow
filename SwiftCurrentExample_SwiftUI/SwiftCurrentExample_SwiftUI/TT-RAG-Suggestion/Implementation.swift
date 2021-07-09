@@ -34,15 +34,8 @@ extension ModifiedContent: ViewMetadata where Content: ViewMetadata {
     }
 }
 
-public struct WorkflowItem: View, ViewMetadata {
-    @ObservedObject var model = Model()
-    public var body: some View {
-        model.view
-    }
+public struct WorkflowItem {
     public var metadata: FlowRepresentableMetadata
-    public func updateView(with newView: AnyView) {
-        model.view = newView
-    }
 
     public init<FR: FlowRepresentable & View>(_: FR.Type) {
         metadata = FlowRepresentableMetadata(FR.self) { _ in .default }
@@ -60,12 +53,16 @@ public struct WorkflowItem: View, ViewMetadata {
         return self
     }
 
-    class Model: ObservableObject {
-        @Published var view = AnyView(EmptyView())
-    }
-
     // MARK: AFTER MMP not right now but let's play it out
     public func presentationType(_ style: LaunchStyle) -> Self { self }
+
+    // MARK: Modifier code (TT suggestion)
+    public typealias Viewy<V: View> = (AnyView) -> V
+    public func applyModifiers<V: View>(@ViewBuilder _ closure: @escaping Viewy<V>) -> Self {
+        metadata._updateModifierClosure { AnyView(closure($0)) }
+
+        return self
+    }
 }
 
 public struct WorkflowView: View {
@@ -76,7 +73,9 @@ public struct WorkflowView: View {
     public var body: some View {
         if isPresented {
             VStack {
-                model.body
+                if true {
+                    model.body
+                }
             }.onAppear {
                 model.launchOnce()
             }
@@ -93,12 +92,9 @@ public struct WorkflowView: View {
         model.args = .args(args)
     }
 
-    func thenProceed<Content: View>(with content: Content) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
-        guard let metadata = content as? ViewMetadata else { fatalError("thenProceed(with:) must be called with WorkflowItem.") }
-        metadata.metadata.circularView = AnyView(content)
-        metadata.metadata.updateableVersion = metadata
+    func thenProceed(with content: WorkflowItem) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         if model.workflow == nil {
-            let workflow = WorkflowBase(metadata.metadata)
+            let workflow = WorkflowBase(content.metadata)
             let anyWorkflow = AnyWorkflow(workflow)
             model.workflow = anyWorkflow
 
@@ -108,7 +104,7 @@ public struct WorkflowView: View {
                                              onFinish: { args in model.onFinish.forEach { $0(args) } })
             }
         } else {
-            model.workflow?.append(metadata.metadata)
+            model.workflow?.append(content.metadata)
         }
 
         return self
@@ -130,6 +126,7 @@ public struct WorkflowView: View {
 
 extension WorkflowView {
     fileprivate class WorkflowViewModel: ObservableObject {
+        @Published var body = AnyView(EmptyView())
         var workflow: AnyWorkflow?
         var launchStyle = LaunchStyle.default
         var onFinish = [(AnyWorkflow.PassedArgs) -> Void]()
@@ -147,38 +144,31 @@ extension WorkflowView {
                 launchClosure()
             }
         }
-
-        @Published var body = AnyView(EmptyView())
     }
 }
 
 extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
     func launch(to: AnyWorkflow.Element) {
-        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView,
-              let circleCircle = to.value.metadata.circularView
-              , let notAnyView = to.value.metadata.updateableVersion
-        else {
+        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
             fatalError("Underlying instance was not AnyView")
         }
 
-        withAnimation {
-            notAnyView.updateView(with: underlyingView)
-            body = circleCircle
+        if let closure = to.value.metadata.modifierClosure {
+            body = closure(underlyingView)
+        } else {
+            body = underlyingView
         }
     }
 
     func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {
-        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView,
-              let circleCircle = to.value.metadata.circularView
-              , let notAnyView = to.value.metadata.updateableVersion
-        else {
+        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
             fatalError("Underlying instance was not AnyView")
         }
 
-
-        withAnimation {
-            notAnyView.updateView(with: underlyingView)
-            body = circleCircle
+        if let closure = to.value.metadata.modifierClosure {
+            body = closure(underlyingView)
+        } else {
+            body = underlyingView
         }
     }
 

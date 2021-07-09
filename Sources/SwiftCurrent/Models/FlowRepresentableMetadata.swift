@@ -29,6 +29,11 @@ public class FlowRepresentableMetadata {
 
     public var circularView: AnyView?
     public var updateableVersion: ViewMetadata?
+
+    public var modifierClosure: ((AnyView) -> AnyView)?
+    public func _updateModifierClosure(with closure: @escaping (AnyView) -> AnyView) {
+        modifierClosure = closure
+    }
     /**
      Creates an instance that holds onto metadata associated with the `FlowRepresentable`.
 
