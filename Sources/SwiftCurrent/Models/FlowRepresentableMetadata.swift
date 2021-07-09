@@ -7,18 +7,12 @@
 //
 
 import Foundation
-import SwiftUI
 /**
  Data about a `FlowRepresentable`.
 
  ### Discussion
  Every time a `Workflow` is created, the defining characteristics about a `FlowRepresentable` are stored in the `FlowRepresentableMetadata` to be used later.
  */
-public protocol ViewMetadata {
-    var metadata: FlowRepresentableMetadata { get }
-    func updateView(with newView: AnyView)
-}
-
 public class FlowRepresentableMetadata {
     /// Preferred `LaunchStyle` of the associated `FlowRepresentable`.
     public private(set) var launchStyle: LaunchStyle
@@ -27,13 +21,6 @@ public class FlowRepresentableMetadata {
     private(set) var flowRepresentableFactory: (AnyWorkflow.PassedArgs) -> AnyFlowRepresentable
     private var flowPersistence: (AnyWorkflow.PassedArgs) -> FlowPersistence
 
-    public var circularView: AnyView?
-    public var updateableVersion: ViewMetadata?
-
-    public var modifierClosure: ((AnyView) -> AnyView)?
-    public func _updateModifierClosure(with closure: @escaping (AnyView) -> AnyView) {
-        modifierClosure = closure
-    }
     /**
      Creates an instance that holds onto metadata associated with the `FlowRepresentable`.
 
@@ -51,13 +38,25 @@ public class FlowRepresentableMetadata {
         self.launchStyle = launchStyle
     }
 
-    // Needed because FR was lost after the init so I can't init again with just this info
-    public func _updatePersistenceClosure(_ persistence: FlowPersistence) {
-        flowPersistence = { _ in persistence }
-    }
-    public func _updateLaunchStyle(_ launchStyle: LaunchStyle) {
+    public init<FR: FlowRepresentable>(_ flowRepresentableType: FR.Type,
+                                       launchStyle: LaunchStyle = .default,
+                                       flowPersistence:@escaping (AnyWorkflow.PassedArgs) -> FlowPersistence,
+                                       factory: @escaping (AnyWorkflow.PassedArgs) -> AnyFlowRepresentable) {
+        flowRepresentableFactory = factory
+        self.flowPersistence = flowPersistence
         self.launchStyle = launchStyle
     }
+
+    // Needed because FR was lost after the init so I can't init again with just this info
+//    public func _updatePersistenceClosure(_ persistence: FlowPersistence) {
+//        flowPersistence = { _ in persistence }
+//    }
+//    public func _updateLaunchStyle(_ launchStyle: LaunchStyle) {
+//        self.launchStyle = launchStyle
+//    }
+//    public func _updateFlowRepresentableFactory(with closure: @escaping (AnyWorkflow.PassedArgs) -> AnyFlowRepresentable) {
+//        flowRepresentableFactory = closure
+//    }
 
     func setPersistence(_ args: AnyWorkflow.PassedArgs) -> FlowPersistence {
         let val = flowPersistence(args)

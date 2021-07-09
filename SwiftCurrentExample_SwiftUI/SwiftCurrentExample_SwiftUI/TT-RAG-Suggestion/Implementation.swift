@@ -25,30 +25,30 @@ import SwiftCurrent
              showWorkflow = false
          }
  */
-
-
-extension ModifiedContent: ViewMetadata where Content: ViewMetadata {
-    public var metadata: FlowRepresentableMetadata { content.metadata }
-    public func updateView(with newView: AnyView) {
-        content.updateView(with: newView)
-    }
-}
-
-public struct WorkflowItem {
+public final class WorkflowItem<F: FlowRepresentable & View> {
     public var metadata: FlowRepresentableMetadata
+    var modifierClosure: ((AnyView) -> AnyView)? = nil
+    var flowPersistence: (AnyWorkflow.PassedArgs) -> FlowPersistence = { _ in .default }
 
-    public init<FR: FlowRepresentable & View>(_: FR.Type) {
-        metadata = FlowRepresentableMetadata(FR.self) { _ in .default }
+    public init(_: F.Type) {
+        // set self so I can reference self for the factory
+        metadata = FlowRepresentableMetadata(F.self) { _ in .default }
+        metadata = FlowRepresentableMetadata(F.self,
+                                             flowPersistence: flowPersistence,
+                                             factory: factory)
     }
 
     public func persistence(_ persistence: FlowPersistence) -> Self {
-        metadata._updatePersistenceClosure(persistence)
+        flowPersistence = { _ in persistence }
 
         return self
     }
 
     public func launchStyle(_ style: LaunchStyle) -> Self {
-        metadata._updateLaunchStyle(style)
+        metadata = FlowRepresentableMetadata(F.self,
+                                             launchStyle: style,
+                                             flowPersistence: flowPersistence,
+                                             factory: factory)
 
         return self
     }
@@ -59,9 +59,22 @@ public struct WorkflowItem {
     // MARK: Modifier code (TT suggestion)
     public typealias Viewy<V: View> = (AnyView) -> V
     public func applyModifiers<V: View>(@ViewBuilder _ closure: @escaping Viewy<V>) -> Self {
-        metadata._updateModifierClosure { AnyView(closure($0)) }
+        modifierClosure = { AnyView(closure($0)) }
 
         return self
+    }
+
+    private func factory(args: AnyWorkflow.PassedArgs) -> AnyFlowRepresentable {
+        let afr = AnyFlowRepresentable(F.self, args: args)
+        guard let underlyingView = afr.underlyingInstance as? AnyView else {
+            fatalError("Underlying instance was not AnyView")
+        }
+
+        if let closure = self.modifierClosure {
+            afr.changeUnderlyingInstance(to: closure(underlyingView))
+        }
+
+        return afr
     }
 }
 
@@ -92,7 +105,7 @@ public struct WorkflowView: View {
         model.args = .args(args)
     }
 
-    func thenProceed(with content: WorkflowItem) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+    func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         if model.workflow == nil {
             let workflow = WorkflowBase(content.metadata)
             let anyWorkflow = AnyWorkflow(workflow)
@@ -153,11 +166,7 @@ extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
             fatalError("Underlying instance was not AnyView")
         }
 
-        if let closure = to.value.metadata.modifierClosure {
-            body = closure(underlyingView)
-        } else {
-            body = underlyingView
-        }
+        body = underlyingView
     }
 
     func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {
@@ -165,11 +174,7 @@ extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
             fatalError("Underlying instance was not AnyView")
         }
 
-        if let closure = to.value.metadata.modifierClosure {
-            body = closure(underlyingView)
-        } else {
-            body = underlyingView
-        }
+        body = underlyingView
     }
 
     func backUp(from: AnyWorkflow.Element, to: AnyWorkflow.Element) {
@@ -177,9 +182,7 @@ extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
             fatalError("Underlying instance was not AnyView")
         }
 
-        withAnimation {
-            body = underlyingView
-        }
+        body = underlyingView
     }
     func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {
         withAnimation {
