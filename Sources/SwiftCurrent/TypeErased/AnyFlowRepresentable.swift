@@ -10,17 +10,17 @@
 import Foundation
 
 /// A type erased `FlowRepresentable`.
-public class AnyFlowRepresentable {
+open class AnyFlowRepresentable {
     typealias WorkflowInput = Any
     typealias WorkflowOutput = Any
 
     /// Erased instance that `AnyFlowRepresentable` wrapped.
-    public var underlyingInstance: Any {
+    open var underlyingInstance: Any {
         return _underlyingInstance ?? _storage.underlyingInstance
     }
 
     private var _underlyingInstance: Any?
-    public func changeUnderlyingInstance(to newInstance: Any) {
+    open func changeUnderlyingInstance(to newInstance: Any) {
         _underlyingInstance = newInstance
     }
 
@@ -50,7 +50,7 @@ public class AnyFlowRepresentable {
 
     fileprivate var _storage: AnyFlowRepresentableStorageBase
 
-    init<FR: FlowRepresentable>(_ instance: inout FR) {
+    public init<FR: FlowRepresentable>(_ instance: inout FR) {
         _storage = AnyFlowRepresentableStorage(&instance)
         _storage._workflowPointer = self
     }

@@ -34,7 +34,8 @@ struct SwiftCurrentExample_SwiftUIApp: App {
                                             .transition(.slide)
                                             .animation(.spring())
                                     }
-                                })
+                                }
+                )
                 .thenProceed(with: WorkflowItem(SecondView.self)
                                 .launchStyle(.default)
                                 .presentationType(.default)

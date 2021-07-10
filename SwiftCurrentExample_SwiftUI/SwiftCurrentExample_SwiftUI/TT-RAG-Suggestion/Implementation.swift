@@ -25,9 +25,45 @@ import SwiftCurrent
              showWorkflow = false
          }
  */
+
+class AnyFlowRepresentableView: AnyFlowRepresentable {
+    var setViewOnModel: () -> Void = { }
+    fileprivate var model: WorkflowView.WorkflowViewModel? {
+        didSet {
+            setViewOnModel()
+        }
+    }
+
+    init<FR: FlowRepresentable & View>(viewType: FR.Type, args: AnyWorkflow.PassedArgs) {
+        var instance: FR
+        switch args {
+            case _ where FR.WorkflowInput.self == Never.self:
+                instance = FR._factory(FR.self)
+            case _ where FR.WorkflowInput.self == AnyWorkflow.PassedArgs.self:
+                // swiftlint:disable:next force_cast
+                instance = FR(with: args as! FR.WorkflowInput)
+            case .args(let extracted):
+                guard let cast = extracted as? FR.WorkflowInput else { fatalError("TYPE MISMATCH: \(String(describing: args)) is not type: \(FR.WorkflowInput.self)") }
+                instance = FR._factory(FR.self, with: cast)
+            default: fatalError("No arguments were passed to representable: \(FR.self), but it expected: \(FR.WorkflowInput.self)")
+        }
+        super.init(&instance)
+        setViewOnModel = { [weak self] in
+            self?.model?.body = AnyView(instance)
+        }
+    }
+
+    func changeUnderlyingView<V: View>(to view: V) {
+        setViewOnModel = { [weak self] in
+            self?.model?.body = AnyView(view)
+        }
+    }
+}
+
 public final class WorkflowItem<F: FlowRepresentable & View> {
+    
     public var metadata: FlowRepresentableMetadata
-    var modifierClosure: ((AnyView) -> AnyView)? = nil
+    var modifierClosure: ((AnyFlowRepresentableView) -> Void)?
     var flowPersistence: (AnyWorkflow.PassedArgs) -> FlowPersistence = { _ in .default }
 
     public init(_: F.Type) {
@@ -51,24 +87,25 @@ public final class WorkflowItem<F: FlowRepresentable & View> {
     public func presentationType(_ style: LaunchStyle) -> Self { self }
 
     // MARK: Modifier code (TT suggestion)
-    public typealias Viewy<V: View> = (AnyView) -> V
+    public typealias Viewy<V: View> = (F) -> V
     public func applyModifiers<V: View>(@ViewBuilder _ closure: @escaping Viewy<V>) -> Self {
-        modifierClosure = { AnyView(closure($0)) }
+        modifierClosure = {
+            let f = $0.underlyingInstance as! F
+            let modified = closure(f)
+            $0.changeUnderlyingView(to: modified)
+        }
 
         return self
     }
 
     private func factory(args: AnyWorkflow.PassedArgs) -> AnyFlowRepresentable {
-        let afr = AnyFlowRepresentable(F.self, args: args)
-        guard let underlyingView = afr.underlyingInstance as? AnyView else {
-            fatalError("Underlying instance was not AnyView")
-        }
+        let afrv = AnyFlowRepresentableView(viewType: F.self, args: args)
 
         if let closure = self.modifierClosure {
-            afr.changeUnderlyingInstance(to: closure(underlyingView))
+            closure(afrv)
         }
 
-        return afr
+        return afrv
     }
 }
 // MARK: Persistence extensions
@@ -187,27 +224,27 @@ extension WorkflowView {
 
 extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
     func launch(to: AnyWorkflow.Element) {
-        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
-            fatalError("Underlying instance was not AnyView")
+        guard let afvr = to.value.instance as? AnyFlowRepresentableView else {
+            fatalError("instance was not AnyFlowRepresentableView")
         }
 
-        body = underlyingView
+        afvr.model = self
     }
 
     func proceed(to: AnyWorkflow.Element, from: AnyWorkflow.Element) {
-        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
-            fatalError("Underlying instance was not AnyView")
+        guard let afvr = to.value.instance as? AnyFlowRepresentableView else {
+            fatalError("instance was not AnyFlowRepresentableView")
         }
 
-        body = underlyingView
+        afvr.model = self
     }
 
     func backUp(from: AnyWorkflow.Element, to: AnyWorkflow.Element) {
-        guard let underlyingView = to.value.instance?.underlyingInstance as? AnyView else {
-            fatalError("Underlying instance was not AnyView")
+        guard let afvr = to.value.instance as? AnyFlowRepresentableView else {
+            fatalError("instance was not AnyFlowRepresentableView")
         }
 
-        body = underlyingView
+        afvr.model = self
     }
     func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {
         withAnimation {
@@ -227,7 +264,7 @@ extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
 extension FlowRepresentable where Self: View {
     public var _workflowUnderlyingInstance: Any {
         get {
-            AnyView(self)
+            self
         }
     }
 }
