@@ -317,11 +317,3 @@ extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
         }
     }
 }
-
-extension FlowRepresentable where Self: View {
-    public var _workflowUnderlyingInstance: Any {
-        get {
-            self
-        }
-    }
-}
