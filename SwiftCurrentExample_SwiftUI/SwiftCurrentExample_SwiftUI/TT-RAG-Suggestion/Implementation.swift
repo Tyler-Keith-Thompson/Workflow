@@ -166,7 +166,6 @@ extension View {
 
 public struct WorkflowView: View {
     @Binding public var isPresented: Bool
-    #warning("This is a timebomb, but StateObject and State both failed us")
     // https://www.hackingwithswift.com/quick-start/swiftui/how-to-use-stateobject-to-create-and-monitor-external-objects
     // says Weimer is right, here's a workaround
     @StateObject private var model = WorkflowViewModel()
