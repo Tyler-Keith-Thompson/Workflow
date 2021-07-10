@@ -140,10 +140,41 @@ extension WorkflowItem  {
     }
 }
 
+struct ViewDidLoadModifier: ViewModifier {
+    @State private var didLoad = false
+    private let action: (() -> Void)?
+
+    init(perform action: (() -> Void)? = nil) {
+        self.action = action
+    }
+
+    func body(content: Content) -> some View {
+        content.onAppear {
+            if didLoad == false {
+                didLoad = true
+                action?()
+            }
+        }
+    }
+}
+
+extension View {
+    func onLoad(perform action: (() -> Void)? = nil) -> some View {
+        modifier(ViewDidLoadModifier(perform: action))
+    }
+}
+
 public struct WorkflowView: View {
-    @Binding var isPresented: Bool
+    @Binding public var isPresented: Bool
     #warning("This is a timebomb, but StateObject and State both failed us")
-    @ObservedObject private var model = WorkflowViewModel()
+    // https://www.hackingwithswift.com/quick-start/swiftui/how-to-use-stateobject-to-create-and-monitor-external-objects
+    // says Weimer is right, here's a workaround
+    @StateObject private var model = WorkflowViewModel()
+    @State private var workflow: AnyWorkflow?
+    @State private var launchStyle = LaunchStyle.default
+    @State private var onFinish = [(AnyWorkflow.PassedArgs) -> Void]()
+    @State private var onAbandon = [() -> Void]()
+    @State private var args: AnyWorkflow.PassedArgs = .none
 
     public var body: some View {
         if isPresented {
@@ -151,8 +182,16 @@ public struct WorkflowView: View {
                 if true {
                     model.body
                 }
-            }.onAppear {
-                model.launchOnce()
+            }.onLoad {
+                model.workflow = workflow
+                model.launchStyle = launchStyle
+                model.onFinish = onFinish
+                model.onAbandon = onAbandon
+                model.args = args
+                model.workflow?.launch(withOrchestrationResponder: model,
+                                                 passedArgs: model.args,
+                                                 launchStyle: model.launchStyle,
+                                                 onFinish: { args in model.onFinish.forEach { $0(args) } })
             }
         }
     }
@@ -164,38 +203,69 @@ public struct WorkflowView: View {
     // We could name args something more explicit to convey that it is the values the workflow is starting with... Possible name: thisWillBePassedToFirstFlowRepresentable
     public init(isPresented: Binding<Bool>, args: Any?) {
         self._isPresented = isPresented
-        model.args = .args(args)
+        _args = State(initialValue: .args(args))
+    }
+
+    private init(isPresented: Binding<Bool>,
+                 workflow: AnyWorkflow?,
+                 launchStyle: LaunchStyle,
+                 onFinish: [(AnyWorkflow.PassedArgs) -> Void],
+                 onAbandon: [() -> Void],
+                 args: AnyWorkflow.PassedArgs) {
+        self._isPresented = isPresented
+        self._workflow = State(initialValue: workflow)
+        self._launchStyle = State(initialValue: launchStyle)
+        self._onFinish = State(initialValue: onFinish)
+        self._onAbandon = State(initialValue: onAbandon)
+        self._args = State(initialValue: args)
     }
 
     func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
-        if model.workflow == nil {
-            let workflow = Workflow<FR>(content.metadata)
-            let anyWorkflow = AnyWorkflow(workflow)
-            model.workflow = anyWorkflow
-
-            model.launchClosure = { workflow.launch(withOrchestrationResponder: model,
-                                             passedArgs: model.args,
-                                             launchStyle: model.launchStyle,
-                                             onFinish: { args in model.onFinish.forEach { $0(args) } })
-            }
+        var workflow = self.workflow
+        if workflow == nil {
+            let typedWorkflow = Workflow<FR>(content.metadata)
+            workflow = AnyWorkflow(typedWorkflow)
         } else {
-            model.workflow?.append(content.metadata)
+            workflow?.append(content.metadata)
         }
 
-        return self
+        return WorkflowView(isPresented: $isPresented,
+                            workflow: workflow,
+                            launchStyle: launchStyle,
+                            onFinish: onFinish,
+                            onAbandon: onAbandon,
+                            args: args)
     }
 
     func onFinish(_ closure: @escaping (AnyWorkflow.PassedArgs) -> Void) -> Self {
-        model.onFinish.append(closure)
-        return self
+        var onFinish = self.onFinish
+        onFinish.append(closure)
+        return WorkflowView(isPresented: $isPresented,
+                            workflow: workflow,
+                            launchStyle: launchStyle,
+                            onFinish: onFinish,
+                            onAbandon: onAbandon,
+                            args: args)
     }
     func onAbandon(_ closure: @escaping () -> Void) -> Self {
-        model.onAbandon.append(closure)
-        return self
+        var onAbandon = self.onAbandon
+        onAbandon.append(closure)
+        return WorkflowView(isPresented: $isPresented,
+                            workflow: workflow,
+                            launchStyle: launchStyle,
+                            onFinish: onFinish,
+                            onAbandon: onAbandon,
+                            args: args)
     }
     func launchStyle(_ style: LaunchStyle) -> Self {
-        model.launchStyle = style
-        return self
+        var launchStyle = self.launchStyle
+        launchStyle = style
+        return WorkflowView(isPresented: $isPresented,
+                            workflow: workflow,
+                            launchStyle: launchStyle,
+                            onFinish: onFinish,
+                            onAbandon: onAbandon,
+                            args: args)
     }
 }
 
@@ -207,18 +277,6 @@ extension WorkflowView {
         var onFinish = [(AnyWorkflow.PassedArgs) -> Void]()
         var onAbandon = [() -> Void]()
         var args: AnyWorkflow.PassedArgs = .none
-
-        var launched = false
-
-        var launchClosure = { }
-
-        // we determine this launch call and it should only launch once
-        func launchOnce() {
-            if !launched {
-                launched.toggle()
-                launchClosure()
-            }
-        }
     }
 }
 

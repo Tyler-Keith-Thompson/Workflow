@@ -39,6 +39,29 @@ public class AnyWorkflow {
     public func append(_ metadata: FlowRepresentableMetadata) {
         storageBase.append(metadata)
     }
+
+    /**
+     Launches the `Workflow`.
+
+     ### Discussion
+     passedArgs are passed to the first instance, it has the opportunity to load, not load and transform them, or just not load.
+     In the event an instance does not load and does not transform args, they are passed unmodified to the next instance in the `Workflow` until one loads.
+
+     - Parameter orchestrationResponder: the `OrchestrationResponder` to notify when the `Workflow` proceeds or backs up.
+     - Parameter passedArgs: the arguments to pass to the first instance(s).
+     - Parameter launchStyle: the launch style to use.
+     - Parameter onFinish: the closure to call when the last element in the workflow proceeds; called with the `AnyWorkflow.PassedArgs` the workflow finished with.
+     - Returns: the first loaded instance or nil, if none was loaded.
+     */
+    @discardableResult public func launch(withOrchestrationResponder orchestrationResponder: OrchestrationResponder,
+                                          passedArgs: AnyWorkflow.PassedArgs,
+                                          launchStyle: LaunchStyle = .default,
+                                          onFinish: ((AnyWorkflow.PassedArgs) -> Void)? = nil) -> AnyWorkflow.Element? {
+        storageBase.launch(withOrchestrationResponder: orchestrationResponder,
+                           passedArgs: passedArgs,
+                           launchStyle: launchStyle,
+                           onFinish: onFinish)
+    }
 }
 
 extension AnyWorkflow: Sequence {
@@ -98,6 +121,13 @@ fileprivate class AnyWorkflowStorageBase {
     func append(_ metadata: FlowRepresentableMetadata) {
         fatalError("append(:) not overriden")
     }
+
+    @discardableResult public func launch(withOrchestrationResponder orchestrationResponder: OrchestrationResponder,
+                                          passedArgs: AnyWorkflow.PassedArgs,
+                                          launchStyle: LaunchStyle = .default,
+                                          onFinish: ((AnyWorkflow.PassedArgs) -> Void)? = nil) -> AnyWorkflow.Element? {
+        fatalError("launch(orchestrationResponder:passedArgs:launchStyle:onFinish) not overriden")
+    }
 }
 
 fileprivate final class AnyWorkflowStorage<F: FlowRepresentable>: AnyWorkflowStorageBase {
@@ -132,5 +162,15 @@ fileprivate final class AnyWorkflowStorage<F: FlowRepresentable>: AnyWorkflowSto
 
     override func append(_ metadata: FlowRepresentableMetadata) {
         workflow.append(metadata)
+    }
+
+    override func launch(withOrchestrationResponder orchestrationResponder: OrchestrationResponder,
+                         passedArgs: AnyWorkflow.PassedArgs,
+                         launchStyle: LaunchStyle = .default,
+                         onFinish: ((AnyWorkflow.PassedArgs) -> Void)? = nil) -> AnyWorkflow.Element? {
+        workflow.launch(withOrchestrationResponder: orchestrationResponder,
+                        passedArgs: passedArgs,
+                        launchStyle: launchStyle,
+                        onFinish: onFinish)
     }
 }
