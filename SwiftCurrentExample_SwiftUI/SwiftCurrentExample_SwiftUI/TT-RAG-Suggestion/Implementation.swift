@@ -34,7 +34,7 @@ class AnyFlowRepresentableView: AnyFlowRepresentable {
     }
 
     init<FR: FlowRepresentable & View>(viewType: FR.Type, args: AnyWorkflow.PassedArgs) {
-        super.init(viewType, args: args)
+        super.init(FR.self, args: args)
         guard let instance = underlyingInstance as? FR else { fatalError("Somehow we couldn't cast instance to itself: \(FR.self)") }
 
         setViewOnModel = { [weak self] in
@@ -175,6 +175,7 @@ public struct WorkflowView<A>: View {
                 model.onFinish = onFinish
                 model.onAbandon = onAbandon
                 model.args = args
+                model.isPresented = $isPresented
                 model.workflow?.launch(withOrchestrationResponder: model,
                                        passedArgs: model.args,
                                        launchStyle: model.launchStyle,
@@ -279,6 +280,7 @@ extension WorkflowView {
 
 fileprivate class WorkflowViewModel: ObservableObject {
     @Published var body = AnyView(EmptyView())
+    var isPresented: Binding<Bool>?
     var workflow: AnyWorkflow?
     var launchStyle = LaunchStyle.default
     var onFinish = [(AnyWorkflow.PassedArgs) -> Void]()
@@ -311,17 +313,29 @@ extension WorkflowViewModel: OrchestrationResponder {
         afvr.model = self
     }
     func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {
-        // should actually update the binding Bool for isPresented. Not set body to anyview.
-        withAnimation {
-            body = AnyView(EmptyView())
+            isPresented?.wrappedValue.toggle()
             onAbandon.forEach { $0() }
             onFinish?()
-        }
     }
     func complete(_ workflow: AnyWorkflow, passedArgs: AnyWorkflow.PassedArgs, onFinish: ((AnyWorkflow.PassedArgs) -> Void)?) {
-        withAnimation {
-            body = AnyView(EmptyView())
-            onFinish?(passedArgs)
+        onFinish?(passedArgs)
+    }
+}
+
+extension Workflow {
+    public func abandon() {
+        AnyWorkflow(self).abandon()
+    }
+}
+
+extension AnyWorkflow {
+    public func abandon() {
+        if let responder = orchestrationResponder {
+            responder.abandon(self) { [weak self] in
+                self?._abandon()
+            }
+        } else {
+            _abandon()
         }
     }
 }

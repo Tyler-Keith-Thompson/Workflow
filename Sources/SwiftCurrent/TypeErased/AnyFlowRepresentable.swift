@@ -45,7 +45,7 @@ open class AnyFlowRepresentable {
 
     fileprivate var _storage: AnyFlowRepresentableStorageBase
 
-    public init<FR: FlowRepresentable>(_ instance: inout FR) {
+    init<FR: FlowRepresentable>(_ instance: inout FR) {
         _storage = AnyFlowRepresentableStorage(&instance)
         _storage._workflowPointer = self
     }

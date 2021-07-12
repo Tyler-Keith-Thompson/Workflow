@@ -76,9 +76,7 @@ struct SecondView: View, FlowRepresentable {
                 .background(Color.blue)
             Button("Confirm") {
                 // call abandon
-                workflow?.abandon(animated: true, onFinish: {
-                    print("got back here")
-                })
+                workflow?.abandon()
             }
             .background(Color.gray)
             .padding()

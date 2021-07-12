@@ -26,7 +26,7 @@ struct SwiftCurrentExample_SwiftUIApp: App {
 //                .thenProceed(with: WorkflowItem(FirstView.self))
 //                .thenProceed(with: WorkflowItem(SecondView.self))
 
-            WorkflowView(isPresented: $presentingWorkflowView, args: "String in")
+            WorkflowView(isPresented: $presentingWorkflowView.animation(.spring()), args: "String in")
                 .thenProceed(with: WorkflowItem(FirstView.self)
                                 .applyModifiers {
                                     if true {
@@ -51,7 +51,7 @@ struct SwiftCurrentExample_SwiftUIApp: App {
                 )
                 .launchStyle(.default) // launch style of WorkflowView, could be moved to the top, depends on consumer
                 .onAbandon {
-                    print("abandoned")
+                    print("PresentingWorkflowView: \($presentingWorkflowView)")
                 }
                 .onFinish { args in
                     print("Finished 1: \(args)")
