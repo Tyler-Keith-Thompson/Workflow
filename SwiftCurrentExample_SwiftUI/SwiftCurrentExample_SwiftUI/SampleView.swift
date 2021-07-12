@@ -7,23 +7,6 @@
 
 import SwiftUI
 import SwiftCurrent
-import SwiftCurrent_SwiftUI
-
-struct SampleView: View {
-    @State var shiftLeading = false
-    private let workflow = Workflow(FirstView.self)
-        .thenProceed(with: SecondView.self)
-
-    var body: some View {
-        Text("")
-    }
-}
-
-struct SampleView_Previews: PreviewProvider {
-    static var previews: some View {
-        SampleView()
-    }
-}
 
 struct FirstView: View, FlowRepresentable {
     var _workflowPointer: AnyFlowRepresentable?
@@ -44,18 +27,11 @@ struct FirstView: View, FlowRepresentable {
             TextField("Enter email", text: $email)
                 .multilineTextAlignment(.center)
             Button("Move Forward") {
-                // TODO: call proceed; pass in email
                 proceedInWorkflow(email)
             }
             .background(email.contains("@wwt.com") ? Color.green : Color.red)
             .padding()
         }
-    }
-}
-
-struct FirstView_Previews: PreviewProvider {
-    static var previews: some View {
-        FirstView(with: "Noble Six")
     }
 }
 
@@ -75,7 +51,6 @@ struct SecondView: View, FlowRepresentable {
             Text("That lone wolf stuff stays behind")
                 .background(Color.blue)
             Button("Confirm") {
-                // call abandon
                 workflow?.abandon()
             }
             .background(Color.gray)
@@ -84,12 +59,6 @@ struct SecondView: View, FlowRepresentable {
     }
 
     func shouldLoad() -> Bool {
-        return email.lowercased() == "lonewolf@wwt.com"
-    }
-}
-
-struct SecondView_Previews: PreviewProvider {
-    static var previews: some View {
-        SecondView(with: "lonewolf@wwt.com")
+        email.lowercased() == "lonewolf@wwt.com"
     }
 }

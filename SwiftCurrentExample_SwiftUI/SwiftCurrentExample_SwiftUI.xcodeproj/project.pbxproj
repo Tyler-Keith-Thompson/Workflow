@@ -15,7 +15,6 @@
 		D7B0222A26810B8000BE7709 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D7B0222926810B8000BE7709 /* Preview Assets.xcassets */; };
 		D7B0223526810B8000BE7709 /* SwiftCurrentExample_SwiftUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B0223426810B8000BE7709 /* SwiftCurrentExample_SwiftUITests.swift */; };
 		D7B0224F26810BCC00BE7709 /* SwiftCurrent in Frameworks */ = {isa = PBXBuildFile; productRef = D7B0224E26810BCC00BE7709 /* SwiftCurrent */; };
-		D7B0225126810BCC00BE7709 /* SwiftCurrent_SwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = D7B0225026810BCC00BE7709 /* SwiftCurrent_SwiftUI */; };
 		D7B0225626810EB500BE7709 /* ContentViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B0225526810EB500BE7709 /* ContentViewTests.swift */; };
 		D7B0225926810F8200BE7709 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = D7B0225826810F8200BE7709 /* ViewInspector */; };
 /* End PBXBuildFile section */
@@ -50,7 +49,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D7B0225126810BCC00BE7709 /* SwiftCurrent_SwiftUI in Frameworks */,
 				D7B0224F26810BCC00BE7709 /* SwiftCurrent in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -142,7 +140,6 @@
 			name = SwiftCurrentExample_SwiftUI;
 			packageProductDependencies = (
 				D7B0224E26810BCC00BE7709 /* SwiftCurrent */,
-				D7B0225026810BCC00BE7709 /* SwiftCurrent_SwiftUI */,
 			);
 			productName = SwiftCurrentExample_SwiftUI;
 			productReference = D7B0221F26810B7D00BE7709 /* SwiftCurrentExample_SwiftUI.app */;
@@ -511,10 +508,6 @@
 		D7B0224E26810BCC00BE7709 /* SwiftCurrent */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftCurrent;
-		};
-		D7B0225026810BCC00BE7709 /* SwiftCurrent_SwiftUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = SwiftCurrent_SwiftUI;
 		};
 		D7B0225826810F8200BE7709 /* ViewInspector */ = {
 			isa = XCSwiftPackageProductDependency;

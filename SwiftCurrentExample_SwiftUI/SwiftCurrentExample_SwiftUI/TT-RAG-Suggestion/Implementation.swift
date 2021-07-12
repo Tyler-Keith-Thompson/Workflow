@@ -5,26 +5,9 @@
 //  Created by Richard Gist on 7/2/21.
 //
 
-import Foundation
 import SwiftUI
 import SwiftCurrent
 
-/*
- The style being implemented:
- WorkflowView(isPresented: $showWorkflow)
- .thenProceed(with: WorkflowItem(FR1.self))
- .thenProceed(with: WorkflowItem(FR2.self)
- .launchStyle(.modal)
- .presentationType(.navigationStack)
- .persistence(.removedAfterProceeding)
- .padding(10)
- .transition(.fade))
- .thenProceed(with: WorkflowItem(FR3.self)
- .launchStyle(.modal) // launch style of WorkflowView, could be moved to the top, depends on consumer
- .onAbandon {
- showWorkflow = false
- }
- */
 class AnyFlowRepresentableView: AnyFlowRepresentable {
     var setViewOnModel: () -> Void = { }
     fileprivate var model: WorkflowViewModel? {
@@ -50,7 +33,6 @@ class AnyFlowRepresentableView: AnyFlowRepresentable {
 }
 
 public final class WorkflowItem<F: FlowRepresentable & View> {
-    
     public var metadata: FlowRepresentableMetadata
     var modifierClosure: ((AnyFlowRepresentableView) -> Void)?
     var flowPersistence: (AnyWorkflow.PassedArgs) -> FlowPersistence = { _ in .default }
@@ -89,7 +71,7 @@ public final class WorkflowItem<F: FlowRepresentable & View> {
     private func factory(args: AnyWorkflow.PassedArgs) -> AnyFlowRepresentable {
         let afrv = AnyFlowRepresentableView(viewType: F.self, args: args)
 
-        if let closure = self.modifierClosure {
+        if let closure = modifierClosure {
             closure(afrv)
         }
 
@@ -154,8 +136,6 @@ extension View {
 
 public struct WorkflowView<A>: View {
     @Binding public var isPresented: Bool
-    // https://www.hackingwithswift.com/quick-start/swiftui/how-to-use-stateobject-to-create-and-monitor-external-objects
-    // says Wiemer is right, here's a workaround
     @StateObject private var model = WorkflowViewModel()
     @State private var workflow: AnyWorkflow?
     @State private var launchStyle = LaunchStyle.default
@@ -165,11 +145,12 @@ public struct WorkflowView<A>: View {
 
     public var body: some View {
         if isPresented {
-            VStack {
-                if true {
+            VStack(spacing: 0) {
+                if true { // maybe not needed?
                     model.body
                 }
-            }.onLoad {
+            }
+            .onLoad {
                 model.workflow = workflow
                 model.launchStyle = launchStyle
                 model.onFinish = onFinish
@@ -209,7 +190,6 @@ public struct WorkflowView<A>: View {
     }
 
     func onFinish(_ closure: @escaping (AnyWorkflow.PassedArgs) -> Void) -> Self {
-        var onFinish = self.onFinish
         onFinish.append(closure)
         return WorkflowView(isPresented: $isPresented,
                             workflow: workflow,
@@ -219,7 +199,6 @@ public struct WorkflowView<A>: View {
                             args: args)
     }
     func onAbandon(_ closure: @escaping () -> Void) -> Self {
-        var onAbandon = self.onAbandon
         onAbandon.append(closure)
         return WorkflowView(isPresented: $isPresented,
                             workflow: workflow,
@@ -229,7 +208,6 @@ public struct WorkflowView<A>: View {
                             args: args)
     }
     func launchStyle(_ style: LaunchStyle) -> Self {
-        var launchStyle = self.launchStyle
         launchStyle = style
         return WorkflowView(isPresented: $isPresented,
                             workflow: workflow,
@@ -242,7 +220,6 @@ public struct WorkflowView<A>: View {
 
 extension WorkflowView where A == Never {
     func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowOutput> where FR.WorkflowInput == Never { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
-        var workflow = self.workflow
         if workflow == nil {
             let typedWorkflow = Workflow<FR>(content.metadata)
             workflow = AnyWorkflow(typedWorkflow)
@@ -261,7 +238,6 @@ extension WorkflowView where A == Never {
 
 extension WorkflowView {
     func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowOutput> where A == FR.WorkflowInput { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
-        var workflow = self.workflow
         if workflow == nil {
             let typedWorkflow = Workflow<FR>(content.metadata)
             workflow = AnyWorkflow(typedWorkflow)
