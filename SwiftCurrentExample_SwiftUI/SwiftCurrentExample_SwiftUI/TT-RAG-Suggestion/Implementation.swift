@@ -28,7 +28,7 @@ import SwiftCurrent
 
 class AnyFlowRepresentableView: AnyFlowRepresentable {
     var setViewOnModel: () -> Void = { }
-    fileprivate var model: WorkflowView.WorkflowViewModel? {
+    fileprivate var model: WorkflowViewModel? {
         didSet {
             setViewOnModel()
         }
@@ -164,10 +164,10 @@ extension View {
     }
 }
 
-public struct WorkflowView: View {
+public struct WorkflowView<A>: View {
     @Binding public var isPresented: Bool
     // https://www.hackingwithswift.com/quick-start/swiftui/how-to-use-stateobject-to-create-and-monitor-external-objects
-    // says Weimer is right, here's a workaround
+    // says Wiemer is right, here's a workaround
     @StateObject private var model = WorkflowViewModel()
     @State private var workflow: AnyWorkflow?
     @State private var launchStyle = LaunchStyle.default
@@ -195,12 +195,12 @@ public struct WorkflowView: View {
         }
     }
 
-    public init(isPresented: Binding<Bool>) {
+    public init(isPresented: Binding<Bool>) where A == Never {
         self._isPresented = isPresented
     }
 
     // We could name args something more explicit to convey that it is the values the workflow is starting with... Possible name: thisWillBePassedToFirstFlowRepresentable
-    public init(isPresented: Binding<Bool>, args: Any?) {
+    public init(isPresented: Binding<Bool>, args: A) {
         self._isPresented = isPresented
         _args = State(initialValue: .args(args))
     }
@@ -217,23 +217,6 @@ public struct WorkflowView: View {
         self._onFinish = State(initialValue: onFinish)
         self._onAbandon = State(initialValue: onAbandon)
         self._args = State(initialValue: args)
-    }
-
-    func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> Self { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
-        var workflow = self.workflow
-        if workflow == nil {
-            let typedWorkflow = Workflow<FR>(content.metadata)
-            workflow = AnyWorkflow(typedWorkflow)
-        } else {
-            workflow?.append(content.metadata)
-        }
-
-        return WorkflowView(isPresented: $isPresented,
-                            workflow: workflow,
-                            launchStyle: launchStyle,
-                            onFinish: onFinish,
-                            onAbandon: onAbandon,
-                            args: args)
     }
 
     func onFinish(_ closure: @escaping (AnyWorkflow.PassedArgs) -> Void) -> Self {
@@ -269,17 +252,34 @@ public struct WorkflowView: View {
 }
 
 extension WorkflowView {
-    fileprivate class WorkflowViewModel: ObservableObject {
-        @Published var body = AnyView(EmptyView())
-        var workflow: AnyWorkflow?
-        var launchStyle = LaunchStyle.default
-        var onFinish = [(AnyWorkflow.PassedArgs) -> Void]()
-        var onAbandon = [() -> Void]()
-        var args: AnyWorkflow.PassedArgs = .none
+    func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowInput> where A == FR.WorkflowInput { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+        var workflow = self.workflow
+        if workflow == nil {
+            let typedWorkflow = Workflow<FR>(content.metadata)
+            workflow = AnyWorkflow(typedWorkflow)
+        } else {
+            workflow?.append(content.metadata)
+        }
+
+        return WorkflowView(isPresented: $isPresented,
+                            workflow: workflow,
+                            launchStyle: launchStyle,
+                            onFinish: onFinish,
+                            onAbandon: onAbandon,
+                            args: args)
     }
 }
 
-extension WorkflowView.WorkflowViewModel: OrchestrationResponder {
+fileprivate class WorkflowViewModel: ObservableObject {
+    @Published var body = AnyView(EmptyView())
+    var workflow: AnyWorkflow?
+    var launchStyle = LaunchStyle.default
+    var onFinish = [(AnyWorkflow.PassedArgs) -> Void]()
+    var onAbandon = [() -> Void]()
+    var args: AnyWorkflow.PassedArgs = .none
+}
+
+extension WorkflowViewModel: OrchestrationResponder {
     func launch(to: AnyWorkflow.Element) {
         guard let afvr = to.value.instance as? AnyFlowRepresentableView else {
             fatalError("instance was not AnyFlowRepresentableView")
