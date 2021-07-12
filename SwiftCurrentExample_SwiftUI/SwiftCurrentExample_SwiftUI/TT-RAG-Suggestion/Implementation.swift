@@ -12,18 +12,18 @@ import SwiftCurrent
 /*
  The style being implemented:
  WorkflowView(isPresented: $showWorkflow)
-         .thenProceed(with: WorkflowItem(FR1.self))
-         .thenProceed(with: WorkflowItem(FR2.self)
-                               .launchStyle(.modal)
-                               .presentationType(.navigationStack)
-                               .persistence(.removedAfterProceeding)
-                               .padding(10)
-                               .transition(.fade))
-         .thenProceed(with: WorkflowItem(FR3.self)
-         .launchStyle(.modal) // launch style of WorkflowView, could be moved to the top, depends on consumer
-         .onAbandon {
-             showWorkflow = false
-         }
+ .thenProceed(with: WorkflowItem(FR1.self))
+ .thenProceed(with: WorkflowItem(FR2.self)
+ .launchStyle(.modal)
+ .presentationType(.navigationStack)
+ .persistence(.removedAfterProceeding)
+ .padding(10)
+ .transition(.fade))
+ .thenProceed(with: WorkflowItem(FR3.self)
+ .launchStyle(.modal) // launch style of WorkflowView, could be moved to the top, depends on consumer
+ .onAbandon {
+ showWorkflow = false
+ }
  */
 
 class AnyFlowRepresentableView: AnyFlowRepresentable {
@@ -188,9 +188,9 @@ public struct WorkflowView<A>: View {
                 model.onAbandon = onAbandon
                 model.args = args
                 model.workflow?.launch(withOrchestrationResponder: model,
-                                                 passedArgs: model.args,
-                                                 launchStyle: model.launchStyle,
-                                                 onFinish: { args in model.onFinish.forEach { $0(args) } })
+                                       passedArgs: model.args,
+                                       launchStyle: model.launchStyle,
+                                       onFinish: { args in model.onFinish.forEach { $0(args) } })
             }
         }
     }
@@ -251,8 +251,8 @@ public struct WorkflowView<A>: View {
     }
 }
 
-extension WorkflowView {
-    func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowInput> where A == FR.WorkflowInput { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+extension WorkflowView where A == Never {
+    func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowOutput> where FR.WorkflowInput == Never { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         var workflow = self.workflow
         if workflow == nil {
             let typedWorkflow = Workflow<FR>(content.metadata)
@@ -261,12 +261,31 @@ extension WorkflowView {
             workflow?.append(content.metadata)
         }
 
-        return WorkflowView(isPresented: $isPresented,
-                            workflow: workflow,
-                            launchStyle: launchStyle,
-                            onFinish: onFinish,
-                            onAbandon: onAbandon,
-                            args: args)
+        return WorkflowView<FR.WorkflowOutput>(isPresented: $isPresented,
+                                               workflow: workflow,
+                                               launchStyle: launchStyle,
+                                               onFinish: onFinish,
+                                               onAbandon: onAbandon,
+                                               args: args)
+    }
+}
+
+extension WorkflowView {
+    func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowOutput> where A == FR.WorkflowInput { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+        var workflow = self.workflow
+        if workflow == nil {
+            let typedWorkflow = Workflow<FR>(content.metadata)
+            workflow = AnyWorkflow(typedWorkflow)
+        } else {
+            workflow?.append(content.metadata)
+        }
+
+        return WorkflowView<FR.WorkflowOutput>(isPresented: $isPresented,
+                                               workflow: workflow,
+                                               launchStyle: launchStyle,
+                                               onFinish: onFinish,
+                                               onAbandon: onAbandon,
+                                               args: args)
     }
 }
 
