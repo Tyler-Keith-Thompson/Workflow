@@ -177,6 +177,11 @@ public struct WorkflowView<A>: View {
         _args = State(initialValue: .args(args))
     }
 
+    public init(isPresented: Binding<Bool>, args: A) where A == AnyWorkflow.PassedArgs {
+        self._isPresented = isPresented
+        _args = State(initialValue: args)
+    }
+
     private init(isPresented: Binding<Bool>,
                  workflow: AnyWorkflow?,
                  launchStyle: LaunchStyle,
@@ -244,6 +249,23 @@ extension WorkflowView where A == Never {
 
 extension WorkflowView {
     func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowOutput> where A == FR.WorkflowInput { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+        var workflow = self.workflow // capturing this variable is required for things to work. :shrug:
+        if workflow == nil {
+            let typedWorkflow = Workflow<FR>(content.metadata)
+            workflow = AnyWorkflow(typedWorkflow)
+        } else {
+            workflow?.append(content.metadata)
+        }
+
+        return WorkflowView<FR.WorkflowOutput>(isPresented: $isPresented,
+                                               workflow: workflow,
+                                               launchStyle: launchStyle,
+                                               onFinish: onFinish,
+                                               onAbandon: onAbandon,
+                                               args: args)
+    }
+
+    func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowOutput> where FR.WorkflowInput == AnyWorkflow.PassedArgs { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
         var workflow = self.workflow // capturing this variable is required for things to work. :shrug:
         if workflow == nil {
             let typedWorkflow = Workflow<FR>(content.metadata)
