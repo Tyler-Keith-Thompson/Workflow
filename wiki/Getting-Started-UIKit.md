@@ -1,32 +1,47 @@
-# Interested in seeing examples of SwiftCurrent in action?
-
-Start by cloning the repo and checking out the 'SwiftCurrentExample' scheme. This should give you a decent idea of how the library works.  If you want to create a new project, read on.
-
 # Swift Package Manager with Programmatic UIKit Views
+
+This guide will walk you through getting a [Workflow](https://wwt.github.io/SwiftCurrent/Classes/Workflow.html) up and running in a new iOS project.  If you would like to see an existing project, clone the repo and view the `SwiftCurrentExample` scheme in `SwiftCurrent.xcworkspace`.
+
+The app in this guide is going to be very simple.  It consists of a screen that will launch the [Workflow](https://wwt.github.io/SwiftCurrent/Classes/Workflow.html), a screen to enter an email address, and an optional screen for if your email contains `wwt.com`.  Here is a preview of what the app will look like:
+
+![Preview image of app](https://github.com/wwt/SwiftCurrent/blob/04a4fdb0c1d5848b6d43174168b51f95c78b2785/wiki/programmatic.gif)
 
 ## Adding the dependency
 
 For instructions on SPM and CocoaPods, [check out our installation page.](https://github.com/wwt/SwiftCurrent/wiki/Installation#swift-package-manager)
 
+## IMPORTANT NOTE
+
+SwiftCurrent is so convenient that you may miss the couple lines that are calls to the library.  To make it easier, we've marked our code snippets with `// SwiftCurrent` to highlight items that are coming from the library.
+
 ## Create your view controllers
 
-Create two view controllers that inherit from [UIWorkflowItem<I, O>](https://github.io/SwiftCurrent/Classes/UIWorkflowItem.html).
+Create two view controllers that inherit from [UIWorkflowItem<I, O>](https://wwt.github.io/SwiftCurrent/Classes/UIWorkflowItem.html) and implement [FlowRepresentable](https://wwt.github.io/SwiftCurrent/Protocols/FlowRepresentable.html).
 
 ```swift
 import UIKit
 import SwiftCurrent
 import SwiftCurrent_UIKit
 
-class FirstViewController: UIWorkflowItem<String, String>, FlowRepresentable {
+class FirstViewController: UIWorkflowItem<String, String>, FlowRepresentable { // SwiftCurrent
     private let name: String
     private let emailTextField = UITextField()
     private let welcomeLabel = UILabel()
     private let saveButton = UIButton()
 
-    required init(with name: String) {
+    required init(with name: String) { // SwiftCurrent
         self.name = name
         super.init(nibName: nil, bundle: nil)
+        configureViews()
+    }
 
+    required init?(coder: NSCoder) { nil }
+
+    @objc private func savePressed() {
+        proceedInWorkflow(emailTextField.text ?? "") // SwiftCurrent
+    }
+
+    private func configureViews() {
         view.backgroundColor = .systemGray5
 
         welcomeLabel.text = "Welcome \(name)!"
@@ -56,23 +71,30 @@ class FirstViewController: UIWorkflowItem<String, String>, FlowRepresentable {
         saveButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         saveButton.topAnchor.constraint(equalTo: emailTextField.bottomAnchor, constant: 24).isActive = true
     }
-
-    required init?(coder: NSCoder) { nil }
-
-    @objc private func savePressed() {
-        proceedInWorkflow(emailTextField.text ?? "")
-    }
 }
 
 // This screen shows an employee only screen
-class SecondViewController: UIWorkflowItem<String, String>, FlowRepresentable {
+class SecondViewController: UIWorkflowItem<String, String>, FlowRepresentable { // SwiftCurrent
     private let email: String
     private let finishButton = UIButton()
 
-    required init(with email: String) {
+    required init(with email: String) { // SwiftCurrent
         self.email = email
         super.init(nibName: nil, bundle: nil)
+        configureViews()
+    }
 
+    required init?(coder: NSCoder) { nil }
+
+    func shouldLoad() -> Bool { // SwiftCurrent
+        return email.contains("@wwt.com")
+    }
+
+    @objc private func finishPressed() {
+        proceedInWorkflow(email) // SwiftCurrent
+    }
+
+    private func configureViews() {
         view.backgroundColor = .systemGray5
 
         finishButton.setTitle("Finish", for: .normal)
@@ -86,16 +108,6 @@ class SecondViewController: UIWorkflowItem<String, String>, FlowRepresentable {
         finishButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         finishButton.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
     }
-
-    required init?(coder: NSCoder) { nil }
-
-    func shouldLoad() -> Bool {
-        return email.contains("@wwt.com")
-    }
-
-    @objc private func finishPressed() {
-        proceedInWorkflow(email)
-    }
 }
 ```
 
@@ -105,12 +117,12 @@ class SecondViewController: UIWorkflowItem<String, String>, FlowRepresentable {
 
 <details>
 
-It is part of the [FlowRepresentable](https://github.io/SwiftCurrent/Protocols/FlowRepresentable.html) protocol. It has default implementations created for your convenience but is still implementable if you want to control when a [FlowRepresentable](https://github.io/SwiftCurrent/Protocols/FlowRepresentable.html) should load in the work flow.  It is called after `init` but before `viewDidLoad()`.
+It is part of the [FlowRepresentable](https://wwt.github.io/SwiftCurrent/Protocols/FlowRepresentable.html) protocol. It has default implementations created for your convenience but is still implementable if you want to control when a [FlowRepresentable](https://wwt.github.io/SwiftCurrent/Protocols/FlowRepresentable.html) should load in the work flow.  It is called after `init` but before `viewDidLoad()`.
 </details>
 
-## Launching the [Workflow](https://github.io/SwiftCurrent/Classes/Workflow.html)
+## Launching the [Workflow](https://wwt.github.io/SwiftCurrent/Classes/Workflow.html)
 
-Next, we create a [Workflow](https://github.io/SwiftCurrent/Classes/Workflow.html) that is initialized with our [FlowRepresentable](https://github.io/SwiftCurrent/Protocols/FlowRepresentable.html)s and launch it from a view controller that is already loaded onto the screen (in our case, the 'ViewController' class provided by Xcode).
+Next, we create a [Workflow](https://wwt.github.io/SwiftCurrent/Classes/Workflow.html) that is initialized with our [FlowRepresentable](https://wwt.github.io/SwiftCurrent/Protocols/FlowRepresentable.html)s and launch it from a view controller that is already loaded onto the screen (in our case, the 'ViewController' class provided by Xcode).
 
 ```swift
 import UIKit
@@ -133,10 +145,10 @@ class ViewController: UIViewController {
     }
 
     @objc private func didTapLaunchWorkflow() {
-        let workflow = Workflow(FirstViewController.self)
-            .thenPresent(SecondViewController.self)
+        let workflow = Workflow(FirstViewController.self) // SwiftCurrent
+            .thenPresent(SecondViewController.self) // SwiftCurrent
 
-        launchInto(workflow, args: "Noble Six") { passedArgs in
+        launchInto(workflow, args: "Noble Six") { passedArgs in // SwiftCurrent
             workflow.abandon()
 
             guard case .args(let emailAddress as String) = passedArgs else {
@@ -155,14 +167,14 @@ class ViewController: UIViewController {
 
 <details>
 
-The [Workflow](https://github.io/SwiftCurrent/Classes/Workflow.html) has compile-time type safety on the Input/Output types of the supplied [FlowRepresentable](https://github.io/SwiftCurrent/Protocols/FlowRepresentable.html)s. This means that you will get a build error if the output of `FirstViewController` does not match the input type of `SecondViewController`.
+The [Workflow](https://wwt.github.io/SwiftCurrent/Classes/Workflow.html) has compile-time type safety on the Input/Output types of the supplied [FlowRepresentable](https://wwt.github.io/SwiftCurrent/Protocols/FlowRepresentable.html)s. This means that you will get a build error if the output of `FirstViewController` does not match the input type of `SecondViewController`.
 </details>
 
 #### **What's going on with this `passedArgs`?**
 
 <details>
 
-The `onFinish` closure for `launchInto(_:args:onFinish:)` provides the last passed [AnyWorkflow.PassedArgs](https://github.io/SwiftCurrent/Classes/AnyWorkflow/PassedArgs.html) in the work flow. For this Workflow, that could be the output of `FirstViewController` or `SecondViewController` depending on the email signature typed in `FirstViewController`. To extract the value, we unwrap the variable within the case of `.args()` as we expect this workflow to return some argument.
+The `onFinish` closure for `launchInto(_:args:onFinish:)` provides the last passed [AnyWorkflow.PassedArgs](https://wwt.github.io/SwiftCurrent/Classes/AnyWorkflow/PassedArgs.html) in the work flow. For this Workflow, that could be the output of `FirstViewController` or `SecondViewController` depending on the email signature typed in `FirstViewController`. To extract the value, we unwrap the variable within the case of `.args()` as we expect this workflow to return some argument.
 </details>
 
 #### **Why call `abandon()`?**
@@ -179,7 +191,7 @@ Calling `abandon()` closes all the views launched as part of the workflow, leavi
 For our test example, we will be using a library called [UIUTest](https://github.com/nallick/UIUTest). It is optional for testing SwiftCurrent, but in order for the example to be copyable, you will need to add the UIUTest Swift Package
 to your test target.
 
-### Creating the tests
+### Creating tests
 
 ```swift
 import XCTest
