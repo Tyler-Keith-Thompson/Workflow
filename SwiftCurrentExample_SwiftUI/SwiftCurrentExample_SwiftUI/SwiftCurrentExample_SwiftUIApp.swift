@@ -23,26 +23,7 @@ struct SwiftCurrentExample_SwiftUIApp: App {
                                             .transition(.slide)
                                             .animation(.spring())
                                     }
-                                }
-                )
-                .thenProceed(with: WorkflowItem(ThirdView.self)
-                                .applyModifiers {
-                                    if true {
-                                        $0.background(Color.gray)
-                                            .transition(.slide)
-                                            .animation(.spring())
-                                    }
-                                }
-                )
-                .thenProceed(with: WorkflowItem(FirstView.self)
-                                .applyModifiers {
-                                    if true {
-                                        $0.background(Color.gray)
-                                            .transition(.slide)
-                                            .animation(.spring())
-                                    }
-                                }
-                )
+                                })
                 .thenProceed(with: WorkflowItem(SecondView.self)
                                 .launchStyle(.default)
                                 .presentationType(.default)
@@ -54,8 +35,7 @@ struct SwiftCurrentExample_SwiftUIApp: App {
                                             .transition(.slide)
                                             .animation(.spring())
                                     }
-                                }
-                )
+                                })
                 .launchStyle(.default) // launch style of WorkflowView, could be moved to the top, depends on consumer
                 .onAbandon {
                     print("PresentingWorkflowView: \($presentingWorkflowView)")
@@ -63,10 +43,8 @@ struct SwiftCurrentExample_SwiftUIApp: App {
                 .onFinish { args in
                     print("Finished 1: \(args)")
                 }
-                .onFinish { args in
-                    print("Finished 2: \(args)")
-                }
-            NotWorkflowView(isPresented: $presentingWorkflowView)
+                .onFinish { print("Finished 2: \($0)") }
+            NotWorkflowView(isPresented: $presentingWorkflowView.animation(.spring()))
         }
     }
 }
