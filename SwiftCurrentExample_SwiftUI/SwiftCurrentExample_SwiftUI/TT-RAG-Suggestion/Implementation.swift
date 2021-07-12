@@ -25,7 +25,6 @@ import SwiftCurrent
  showWorkflow = false
  }
  */
-
 class AnyFlowRepresentableView: AnyFlowRepresentable {
     var setViewOnModel: () -> Void = { }
     fileprivate var model: WorkflowViewModel? {
@@ -35,19 +34,9 @@ class AnyFlowRepresentableView: AnyFlowRepresentable {
     }
 
     init<FR: FlowRepresentable & View>(viewType: FR.Type, args: AnyWorkflow.PassedArgs) {
-        var instance: FR
-        switch args {
-            case _ where FR.WorkflowInput.self == Never.self:
-                instance = FR._factory(FR.self)
-            case _ where FR.WorkflowInput.self == AnyWorkflow.PassedArgs.self:
-                // swiftlint:disable:next force_cast
-                instance = FR(with: args as! FR.WorkflowInput)
-            case .args(let extracted):
-                guard let cast = extracted as? FR.WorkflowInput else { fatalError("TYPE MISMATCH: \(String(describing: args)) is not type: \(FR.WorkflowInput.self)") }
-                instance = FR._factory(FR.self, with: cast)
-            default: fatalError("No arguments were passed to representable: \(FR.self), but it expected: \(FR.WorkflowInput.self)")
-        }
-        super.init(&instance)
+        super.init(viewType, args: args)
+        guard let instance = underlyingInstance as? FR else { fatalError("Somehow we couldn't cast instance to itself: \(FR.self)") }
+
         setViewOnModel = { [weak self] in
             self?.model?.body = AnyView(instance)
         }
@@ -87,8 +76,7 @@ public final class WorkflowItem<F: FlowRepresentable & View> {
     public func presentationType(_ style: LaunchStyle) -> Self { self }
 
     // MARK: Modifier code (TT suggestion)
-    public typealias Viewy<V: View> = (F) -> V
-    public func applyModifiers<V: View>(@ViewBuilder _ closure: @escaping Viewy<V>) -> Self {
+    public func applyModifiers<V: View>(@ViewBuilder _ closure: @escaping (F) -> V) -> Self {
         modifierClosure = {
             let f = $0.underlyingInstance as! F
             let modified = closure(f)
@@ -323,6 +311,7 @@ extension WorkflowViewModel: OrchestrationResponder {
         afvr.model = self
     }
     func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {
+        // should actually update the binding Bool for isPresented. Not set body to anyview.
         withAnimation {
             body = AnyView(EmptyView())
             onAbandon.forEach { $0() }

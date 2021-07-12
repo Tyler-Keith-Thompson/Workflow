@@ -16,12 +16,7 @@ open class AnyFlowRepresentable {
 
     /// Erased instance that `AnyFlowRepresentable` wrapped.
     open var underlyingInstance: Any {
-        return _underlyingInstance ?? _storage.underlyingInstance
-    }
-
-    private var _underlyingInstance: Any?
-    open func changeUnderlyingInstance(to newInstance: Any) {
-        _underlyingInstance = newInstance
+        _storage.underlyingInstance
     }
 
     var workflow: AnyWorkflow? {
