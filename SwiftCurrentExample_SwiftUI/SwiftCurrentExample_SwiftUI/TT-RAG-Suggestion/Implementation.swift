@@ -146,9 +146,7 @@ public struct WorkflowView<A>: View {
     public var body: some View {
         if isPresented {
             VStack(spacing: 0) {
-                if true { // maybe not needed?
-                    model.body
-                }
+                model.body
             }
             .onLoad {
                 model.workflow = workflow
@@ -161,6 +159,10 @@ public struct WorkflowView<A>: View {
                                        passedArgs: model.args,
                                        launchStyle: model.launchStyle,
                                        onFinish: { args in model.onFinish.forEach { $0(args) } })
+            }
+            // This removes the view so that when you start the workflow again, you don't see the last screen.  But it does show some weirdness when you realize what your views are actually doing. I believe this is proper and correct.
+            .onDisappear {
+                model.body = AnyView(EmptyView())
             }
         }
     }
