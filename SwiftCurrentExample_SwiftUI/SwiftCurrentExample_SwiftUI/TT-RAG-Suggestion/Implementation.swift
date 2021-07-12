@@ -190,6 +190,7 @@ public struct WorkflowView<A>: View {
     }
 
     func onFinish(_ closure: @escaping (AnyWorkflow.PassedArgs) -> Void) -> Self {
+        var onFinish = self.onFinish // capturing this variable is required for things to work. :shrug:
         onFinish.append(closure)
         return WorkflowView(isPresented: $isPresented,
                             workflow: workflow,
@@ -199,6 +200,7 @@ public struct WorkflowView<A>: View {
                             args: args)
     }
     func onAbandon(_ closure: @escaping () -> Void) -> Self {
+        var onAbandon = self.onAbandon // capturing this variable is required for things to work. :shrug:
         onAbandon.append(closure)
         return WorkflowView(isPresented: $isPresented,
                             workflow: workflow,
@@ -208,6 +210,7 @@ public struct WorkflowView<A>: View {
                             args: args)
     }
     func launchStyle(_ style: LaunchStyle) -> Self {
+        var launchStyle = self.launchStyle // capturing this variable is required for things to work. :shrug:
         launchStyle = style
         return WorkflowView(isPresented: $isPresented,
                             workflow: workflow,
@@ -220,6 +223,7 @@ public struct WorkflowView<A>: View {
 
 extension WorkflowView where A == Never {
     func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowOutput> where FR.WorkflowInput == Never { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+        var workflow = self.workflow // capturing this variable is required for things to work. :shrug:
         if workflow == nil {
             let typedWorkflow = Workflow<FR>(content.metadata)
             workflow = AnyWorkflow(typedWorkflow)
@@ -238,6 +242,7 @@ extension WorkflowView where A == Never {
 
 extension WorkflowView {
     func thenProceed<FR: FlowRepresentable & View>(with content: WorkflowItem<FR>) -> WorkflowView<FR.WorkflowOutput> where A == FR.WorkflowInput { // This has some sort of type information at this point so that the user can be forced to do the right thing with adding the right type for Input/Output
+        var workflow = self.workflow // capturing this variable is required for things to work. :shrug:
         if workflow == nil {
             let typedWorkflow = Workflow<FR>(content.metadata)
             workflow = AnyWorkflow(typedWorkflow)
@@ -289,9 +294,9 @@ extension WorkflowViewModel: OrchestrationResponder {
         afvr.model = self
     }
     func abandon(_ workflow: AnyWorkflow, onFinish: (() -> Void)?) {
-            isPresented?.wrappedValue.toggle()
-            onAbandon.forEach { $0() }
-            onFinish?()
+        isPresented?.wrappedValue.toggle()
+        onAbandon.forEach { $0() }
+        onFinish?()
     }
     func complete(_ workflow: AnyWorkflow, passedArgs: AnyWorkflow.PassedArgs, onFinish: ((AnyWorkflow.PassedArgs) -> Void)?) {
         onFinish?(passedArgs)
